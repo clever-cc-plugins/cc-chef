@@ -3,7 +3,7 @@
 **For:** skills that suggest dishes from an ingredient list, a description, or a photo of the fridge, and skills that adapt recipes through substitutions.
 **Why research helps:** the most common trigger for the plugin is "this is in the fridge and needs to be used". Good suggestions need flexible dish templates, a sense of which ingredients are urgent, sensible pantry assumptions, and substitutions that account for how a swap changes the technique. The research also covers how reliably current AI can recognize ingredients from photos.
 
-Paste the prompt below into a deep-research AI tool. Save the response as `docs/research/cooking-from-what-is-on-hand.md`.
+Paste the prompt below into a deep-research AI tool. Save the response as `docs/research/research-results-cooking-from-what-is-on-hand-by-<tool>.md`.
 
 ---
 

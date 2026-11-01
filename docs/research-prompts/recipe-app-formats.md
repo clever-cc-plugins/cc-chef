@@ -3,7 +3,7 @@
 **For:** the export of recipes in a format that recipe management apps can import.
 **Why research helps:** users manage recipes in many different apps, self-hosted and commercial. The plugin should save recipes in a format their app accepts, ideally choosing from a small set of formats that covers most apps. This is technical research: official documentation and source code matter more than scientific literature.
 
-Any tool with good web search works. Save the response as `docs/research/recipe-app-formats.md`.
+Any tool with good web search works. Save the response as `docs/research/research-results-recipe-app-formats-by-<tool>.md`.
 
 ---
 

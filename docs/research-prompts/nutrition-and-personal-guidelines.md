@@ -3,7 +3,7 @@
 **For:** the opt-in dietary-guidelines support — helping users who want it to create their own guidelines, and applying registered guidelines (e.g. a food list with cholesterol, iron, and fiber values) when creating or adapting recipes.
 **Why research helps:** this is the area where mistakes matter most. The plugin supports healthier eating but does not replace medical or dietetic advice. The skills need evidence-graded knowledge of dietary patterns and cooking-relevant levers, hard constraints (allergies, life-stage rules), and a clear line where they must defer to a doctor or registered dietitian.
 
-Best run in tools with access to scientific databases (e.g. Consensus, Elicit, Scite, or a general tool with academic search), plus at least one general deep-research tool. Save the responses as `docs/research/nutrition-and-personal-guidelines.md` (or one file per tool, see the README).
+Best run in tools with access to scientific databases (e.g. Consensus, Elicit, Scite, or a general tool with academic search), plus at least one general deep-research tool. Save each response as `docs/research/research-results-nutrition-and-personal-guidelines-by-<tool>.md`.
 
 ---
 

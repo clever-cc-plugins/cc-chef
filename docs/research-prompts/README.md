@@ -16,5 +16,5 @@ Ready-to-paste deep-research prompts that build the knowledge base for cc-chef's
 
 1. Open the prompt file.
 2. Paste the delimited prompt block into the deep-research feature of an AI tool (Claude, ChatGPT, Gemini, Perplexity, Consensus, Elicit, or similar). Running the same prompt in more than one tool and merging the results is encouraged, especially for prompt 4.
-3. Save the response as Markdown under `docs/research/<prompt-file-name>.md` (e.g. `docs/research/culinary-craft.md`). If you run a prompt in several tools, save each as `docs/research/<prompt-file-name>-<tool>.md`.
+3. Save the response as Markdown under `docs/research/research-results-<prompt-file-name>-by-<tool>.md` (e.g. `docs/research/research-results-culinary-craft-by-claude.md`).
 4. Once all five are in, the plugin design starts from `docs/skill-ideas.md` and the research files.

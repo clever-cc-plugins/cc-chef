@@ -3,7 +3,7 @@
 **For:** every skill that outputs a recipe, and the skill that restructures recipes found in magazines or online to match the user's preferences.
 **Why research helps:** a recipe is a set of instructions that has to work in someone else's kitchen. Structure, units, precision, and conventions vary by language and country, and the plugin must work in any language. This research gives the skills a well-founded default structure and the knowledge to adapt it to each user's configured preferences (language, units, sections, level of detail).
 
-Paste the prompt below into a deep-research AI tool. Save the response as `docs/research/recipe-writing.md`.
+Paste the prompt below into a deep-research AI tool. Save the response as `docs/research/research-results-recipe-writing-by-<tool>.md`.
 
 ---
 

@@ -3,7 +3,7 @@
 **For:** every cc-chef skill that creates or improves a recipe.
 **Why research helps:** the main complaint about generic AI recipe ideas is that they are doable but forgettable. The target is everyday food — comfort food, traditional fare, rustic home cooking — made memorable by a deliberate touch, without tipping into experimental cooking. This research should give the skills concrete, evidence-aware principles for that, instead of vague "add flavor" advice.
 
-Paste the prompt below into a deep-research AI tool. Save the response as `docs/research/culinary-craft.md`.
+Paste the prompt below into a deep-research AI tool. Save the response as `docs/research/research-results-culinary-craft-by-<tool>.md`.
 
 ---
 
