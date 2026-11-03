@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import json
 import tempfile
 import unittest
@@ -51,7 +52,15 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(p["ingredients"], "Kochen:\n1 l Wasser")
         self.assertEqual(p["directions"], "1. Kochen\nKochen.")
         h = p.pop("hash")
-        self.assertEqual(len(h), 64)
+        expected = hashlib.sha256(json.dumps(p, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+        self.assertEqual(h, expected)
+
+    def test_paprika_skips_heading_for_step_without_ingredients(self):
+        r = rt.parse_recipe(
+            "---\ncc-chef: 1\ntitle: T\n---\n\n# T\n\n## Zubereitung\n\n"
+            "### 1. Vorbereiten\n\nNur Text.\n\n### 2. Kochen\n\n- **1 l** Wasser\n\nKochen.\n"
+        )
+        self.assertEqual(rt.to_paprika(r)["ingredients"], "Kochen:\n1 l Wasser")
 
     def test_paprika_archive_roundtrip(self):
         with tempfile.TemporaryDirectory() as t:
@@ -74,6 +83,31 @@ class ExportTests(unittest.TestCase):
             self.assertEqual(res.returncode, 0, res.stderr)
             with zipfile.ZipFile(out) as z:
                 self.assertEqual(z.namelist(), ["rinderrouladen.paprikarecipe", "rinderrouladen-2.paprikarecipe"])
+
+    def test_paprika_slug_collision_with_suffixed_title(self):
+        with tempfile.TemporaryDirectory() as t:
+            files = []
+            for i, title in enumerate(["A", "A", "A 2"]):
+                f = Path(t) / f"{i}.md"
+                f.write_text(
+                    f"---\ncc-chef: 1\ntitle: {title}\n---\n\n# {title}\n\n### 1. X\n\nY\n", encoding="utf-8"
+                )
+                files.append(f)
+            out = Path(t) / "out.paprikarecipes"
+            self.assertEqual(run_cli("paprika", *files, "-o", out).returncode, 0)
+            with zipfile.ZipFile(out) as z:
+                self.assertEqual(
+                    z.namelist(), ["a.paprikarecipe", "a-2.paprikarecipe", "a-2-2.paprikarecipe"]
+                )
+
+    def test_output_write_failure(self):
+        with tempfile.TemporaryDirectory() as t:
+            for cmd, name in (("jsonld", "out.json"), ("paprika", "out.paprikarecipes")):
+                out = Path(t) / "missing" / name
+                res = run_cli(cmd, FIX / "rouladen.de.md", "-o", out)
+                self.assertEqual(res.returncode, 1)
+                self.assertTrue(res.stderr.startswith(f"{out}: "), res.stderr)
+                self.assertNotIn("Traceback", res.stderr)
 
     def test_paprika_parse_failure_writes_nothing(self):
         with tempfile.TemporaryDirectory() as t:

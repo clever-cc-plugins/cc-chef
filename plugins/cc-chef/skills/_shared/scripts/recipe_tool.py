@@ -280,6 +280,7 @@ def to_paprika(r: Recipe) -> dict:
         "ingredients": "\n".join(
             line
             for s in r.steps
+            if s.ingredients
             for line in [f"{s.title}:", *(ingredient_line(i) for i in s.ingredients)]
         ),
         "directions": "\n\n".join(f"{s.number}. {s.title}\n{s.text}" for s in r.steps),
@@ -310,7 +311,11 @@ def _cmd_jsonld(args: argparse.Namespace) -> int:
         return 1
     text = json.dumps(to_jsonld(recipe), indent=2, ensure_ascii=False) + "\n"
     if args.output:
-        Path(args.output).write_text(text, encoding="utf-8")
+        try:
+            Path(args.output).write_text(text, encoding="utf-8")
+        except OSError as e:
+            print(f"{args.output}: {e.strerror or e}", file=sys.stderr)
+            return 1
     else:
         sys.stdout.buffer.write(text.encode("utf-8"))
     return 0
@@ -320,14 +325,21 @@ def _cmd_paprika(args: argparse.Namespace) -> int:
     recipes = [_load(f) for f in args.files]
     if any(r is None for r in recipes):
         return 1
-    used: dict[str, int] = {}
-    with zipfile.ZipFile(args.output, "w", zipfile.ZIP_DEFLATED) as z:
-        for r in recipes:
-            slug = slugify(r.title)
-            used[slug] = used.get(slug, 0) + 1
-            name = slug if used[slug] == 1 else f"{slug}-{used[slug]}"
-            data = json.dumps(to_paprika(r), ensure_ascii=False).encode("utf-8")
-            z.writestr(f"{name}.paprikarecipe", gzip.compress(data))
+    used: set[str] = set()
+    try:
+        with zipfile.ZipFile(args.output, "w", zipfile.ZIP_DEFLATED) as z:
+            for r in recipes:
+                slug = slugify(r.title)
+                name, n = slug, 2
+                while name in used:
+                    name = f"{slug}-{n}"
+                    n += 1
+                used.add(name)
+                data = json.dumps(to_paprika(r), ensure_ascii=False).encode("utf-8")
+                z.writestr(f"{name}.paprikarecipe", gzip.compress(data))
+    except OSError as e:
+        print(f"{args.output}: {e.strerror or e}", file=sys.stderr)
+        return 1
     return 0
 
 
