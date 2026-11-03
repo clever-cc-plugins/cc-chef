@@ -20,6 +20,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `plugins/cc-chef/skills/chef-onboarding/SKILL.md` | TODO: add description                                                                          |
 | `plugins/cc-chef/skills/create-recipe/SKILL.md`   | TODO: add description                                                                          |
 | `plugins/cc-chef/skills/export-recipe/SKILL.md`   | TODO: add description                                                                          |
+| `plugins/cc-chef/skills/rework-recipe/SKILL.md`   | TODO: add description                                                                          |
 | `scripts/sync-config-table.sh`                    | Keeps Key Config Files table in sync on each commit                                            |
 
 ## Don't
