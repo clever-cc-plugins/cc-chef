@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 argument-hint: "[optional: ingredients, a mood, a dish name, or a photo path]"
 ---
 
-@../\_shared/cooking-from-what-is-on-hand.md **Read when:** the input is a mood, an ingredient list or a photo: workflow (section 1), perishability tiers (section 2), pantry assumptions (section 3), dish templates (section 4), photo handling (section 7) and the idea cards (section 8)
+@../\_shared/cooking-from-what-is-on-hand.md **Read when:** the input is a mood, an ingredient list or a photo: workflow (section 1), perishability tiers (section 2), pantry assumptions (section 3), dish templates (section 4), photo handling (section 7), the idea cards (section 8) and the open points to settle before any full recipe, named dish included (section 8.5)
 
 @../\_shared/food-safety.md **Read when:** the inventory or recipe holds cooked leftovers or a high-risk food (section 6), the household has a vulnerable member (section 7), or a safety note is written (decision rules in section 1, the region's authority in section 2, the checklist in section 10)
 
@@ -26,7 +26,7 @@ Where a web-search tool is available, ground ideas and traditional dishes in rea
 
 ## Hard constraints and the household
 
-Collect the hard constraints before the first idea or recipe: `Allergies and hard exclusions`, the `Household` life stages and any registered guideline. They apply to the shared base, so the whole meal honours them, not one plate. An on-hand item that breaks one is left out with a one-line reason; an idea that would break one is never offered, or is adapted and says so in one line.
+Collect the hard constraints before the first idea or recipe: `Allergies and hard exclusions`, the `Household` life stages and any registered guideline. They apply to the shared base, so the whole meal honours them, not one plate. An on-hand item that breaks one is left out with a one-line reason; an idea that would break one is never offered, or is adapted and says so in one line; a requested dish that breaks one is adapted, or declined when no safe version exists, and the answer says so in one line.
 
 A household with an infant or toddler gets base plus branch automatically, even without a registered guideline: cook one shared base, take the child's portion off before salt, chilli or other heat, honey, whole nuts or other restricted items go in, and say so in the method at that step. Check the child's portion for texture and bones too. Apply the life-stage rules in `nutrition-and-guidelines.md` (sections 3 and 5.2) and `food-safety.md` (section 7) rather than restating them; a vulnerable member also means the stricter end of every food-safety range (`food-safety.md` section 1, rule 7).
 
@@ -34,23 +34,23 @@ A household with an infant or toddler gets base plus branch automatically, even 
 
 - Named dish: skip the ideas and go to Step 4.
 - Photo: show a draft inventory grouped by confidence in words (confirmed, likely, unsure, not visible), per `cooking-from-what-is-on-hand.md` section 7.2. Before planning, the user confirms or corrects the items, rough quantities of the main ingredients and the condition of key perishables (section 7.3). Never judge spoilage, freshness or safety from the image; phrase what you see as a prompt ("check the use-by date on the chicken"). Allergens are never read from a photo.
-- Ingredient list or mood: build the inventory per section 1; a mood narrows the template choice.
+- Ingredient list or mood: build the inventory per `cooking-from-what-is-on-hand.md` section 1; a mood narrows the template choice.
 
 ## Step 2: Rank and screen
 
-Rank the confirmed items by perishability (section 2): the safety-critical tier first (raw poultry, fish, mince, cooked rice), then the quality tier. For a tier A item with unknown history, ask only what decides eligibility (when it was cooked, how fast it was chilled, per `food-safety.md` section 1, rule 4); leave out anything with an unknown or unsafe history and say so. Screen what remains against the hard constraints.
+Rank the confirmed items by perishability (`cooking-from-what-is-on-hand.md` section 2): the safety-critical tier first (raw poultry, fish, mince, cooked rice), then the quality tier. For a tier A item with unknown history, ask only what decides eligibility (when it was cooked, how fast it was chilled, per `food-safety.md` section 1, rule 4); leave out anything with an unknown or unsafe history and say so. Screen what remains against the hard constraints.
 
 ## Step 3: Offer ideas
 
-Offer 3 clearly different ideas by default, up to 5 when the user asks for more, following section 8: different in shape first, flavour second, best match first with a few words on why. Every idea is a card with the same fields in the same order (section 8.3), including the time, the on-hand items it uses (urgent ones marked), the few items to buy, and the pantry assumptions: only salt, a cooking fat and water unless `Staple pantry` says otherwise (section 3). A high-risk item carries a short safety note in its card, using the rule of the authority for `Region` (`food-safety.md` section 2). Keep ideas quick and uncomplicated by default, within `Time and skill` and `Equipment`, and lean on `Likes`, `Dislikes` and `Cuisines`. No recipe steps yet; end with one narrow question: which idea to turn into a full recipe.
+Offer 3 clearly different ideas by default, up to 5 when the user asks for more, following `cooking-from-what-is-on-hand.md` section 8: different in shape first, flavour second, best match first with a few words on why. Every idea is a card with the same fields in the same order (its section 8.3), including the time, the on-hand items it uses (urgent ones marked), the few items to buy, and the pantry assumptions: only salt, a cooking fat and water unless `Staple pantry` says otherwise (its section 3). A high-risk item carries a short safety note in its card, using the rule of the authority for `Region` (`food-safety.md` section 2). Keep ideas quick and uncomplicated by default, within `Time and skill` and `Equipment`, and lean on `Likes`, `Dislikes` and `Cuisines`. No recipe steps yet; end with one narrow question: which idea to turn into a full recipe.
 
 ## Step 4: Write the full recipe
 
-Settle the open points first (section 8.5): servings (`Default servings`, else ask), usable amounts, equipment, any leftover-safety question, substitutions. Build the recipe as one structured model: title, servings, prep and cook times, tags, signature touch, oven mode and temperatures, ordered steps that each carry the ingredients they use (an ingredient used in two steps is split between them), and notes. `export-recipe` saves exactly this, so keep the step-ingredient links whatever the chat layout.
+Settle the open points first (`cooking-from-what-is-on-hand.md` section 8.5): servings (`Default servings`, else ask), usable amounts, equipment, any leftover-safety question, substitutions. Build the recipe as one structured model: title, servings, prep and cook times, tags, signature touch, oven mode and temperatures, ordered steps that each carry the ingredients they use (an ingredient used in two steps is split between them), and notes. `export-recipe` saves exactly this, so keep the step-ingredient links whatever the chat layout.
 
 Defaults, overridable by preferences: weights preferred, per `Units`; oven mode with temperature, conventional and fan in metric locales; times paired with visual doneness cues; closing notes on serving, side dishes and drinks. For a named traditional dish, keep its identity core and never call a modified version "authentic".
 
-Before showing it, run the `culinary-craft.md` section 5.1 checklist silently and fix what fails, check the section 5.2 failure modes, and run the `food-safety.md` section 10 checklist; never print a checklist. Name the dish's one signature touch in a sentence. Where a high-risk item is involved (day-old rice, poultry, mince), add a short safety note with the rule of the authority for `Region` (`food-safety.md` section 2; with no region, the strictest default, and say so), worded as "within the cited limit", never "safe".
+Before showing it, run the `culinary-craft.md` section 5.1 checklist silently and fix what fails, check its section 5.2 failure modes, and run the `food-safety.md` section 10 checklist; never print a checklist. Name the dish's one signature touch in a sentence. Where a high-risk item is involved (day-old rice, poultry, mince), add a short safety note with the rule of the authority for `Region` (`food-safety.md` section 2; with no region, the strictest default, and say so), worded as "within the cited limit", never "safe".
 
 Nutrient values appear only when a registered guideline has quantified targets or the user asks: rounded ranges with the data source (`nutrition-and-guidelines.md` section 8.4), and a registered food list takes precedence over any database. Wording stays descriptive, never a health claim; no disclaimer here.
 
