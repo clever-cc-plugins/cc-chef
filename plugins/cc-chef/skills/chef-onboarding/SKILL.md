@@ -16,7 +16,7 @@ Ask one question at a time and wait for the answer. Offer a default with every q
 
 ## Step 1: Discover existing context
 
-Run the discovery commands from the contract's "Finding context". For each `context/`-like folder, list its Markdown files too: a folder can hold files nobody registered yet. Keep the list of `CLAUDE.md` paths for Step 7. Show the user what is registered, grouped by location, as a table with the columns `Label | File | Summary` (or "(none)").
+Run the discovery commands from the contract's "Finding context". For each `context/`-like folder, list its Markdown files too: a folder can hold files nobody registered yet. Keep the list of `CLAUDE.md` paths for Step 7. Show the user what is registered, grouped by location, as a table with the columns `Label | File | Summary` (or "(none)"). Until an output language is set in Step 3, everything shown to the user, including this table and its column names, is in the conversation's language.
 
 Decide by Summary whether a cooking preferences file is already registered ("cooking preferences, units, language, household, recipe target, save folder"), and whether a food list or dietary guideline is. Look for an existing recipe folder too (a directory with recipe files, or one named like `recipes`, `Rezepte`, `Recettes`), to offer in Step 5.
 
@@ -24,16 +24,14 @@ Decide by Summary whether a cooking preferences file is already registered ("coo
 
 - No preferences file registered: fresh onboarding. Continue with Step 3.
 - One registered: read it and say what it holds in one line. Ask what to change ("Which parts do you want to change? Name them, or say 'all' to go through everything."). Ask only those questions. An update changes only the answered fields: edit those sections in place, leave every other heading and value untouched, and do not re-register the file.
-- `$ARGUMENTS` holds a path: if it is a food list, skip to Step 6 for it; if it is a preferences file, register it and treat it as the registered one.
-
-Say the language used for the interview: the conversation's language until the user chooses an output language in Step 3.
+- `$ARGUMENTS` holds a path: if it is a food list, register it per Step 6 first; when no preferences are registered, then continue with fresh onboarding (Step 3). If it is a preferences file, register it and treat it as the registered one (and show the Step 8 disclaimer).
 
 ## Step 3: Interview, part 1: language and conventions
 
 Ask in this order, one question each, with the default in brackets:
 
-1. Output language for recipes and skill replies (the conversation's language). Address form only if the language has one: for German, "du" is the default; ask only if the user wants "Sie".
-2. Region or country (needed for food-safety rules and unit conventions; default: ask, since the strictest rule applies when unknown).
+1. Output language for recipes and skill replies (the conversation's language). For German, use "du" by default and offer "Sie" as a one-line option within this question; do the same for other languages with a formal/informal distinction. Record `Address form` only if it differs from the default.
+2. Region or country (needed for food-safety rules and unit conventions; no default; if skipped, the strictest food-safety rule applies, see `food-safety.md`).
 3. Units: metric or imperial, and weights preferred over volumes or not (metric, weights preferred).
 4. Default servings (2).
 5. Recipe layout: `ingredients-up-front` (one ingredient list, then the steps) or `per-step` (ingredients listed with each step) (ingredients-up-front).
@@ -44,8 +42,9 @@ Ask in this order, one question each, with the default in brackets:
 1. Household members with their life stage: infant, toddler, child, pregnant, adult, older adult (one adult). Explain in one line that this switches on safety rules automatically and that no health data is needed. Do not ask for diagnoses or medical values.
 2. Equipment (default: standard hob and oven; ask whether the oven has a fan).
 3. Staple pantry: what is always at home (default: salt, pepper, oil, flour, sugar, common spices).
-4. Likes, dislikes, and allergies or intolerances to respect in every recipe (default: none). Put allergies under Dislikes with the word "allergy", so skills treat them as hard.
-5. Favourite cuisines, usual time on weekdays and cooking skill (default: no preference, 30-45 minutes, intermediate).
+4. Likes and dislikes (taste only; default: none).
+5. Optional, never pressed: allergies and hard exclusions to respect in every recipe: allergens with severity and cross-contact sensitivity, and absolute religious or ethical exclusions (default: none). Do not probe for health details; mention that `/cc-chef:dietary-guidelines` can record more detail.
+6. Favourite cuisines, usual time on weekdays and cooking skill (default: no preference, 30-45 minutes, intermediate).
 
 ## Step 5: Recipe target and save folder
 
@@ -78,7 +77,7 @@ Ask once: "Do you already have a list of foods with nutrient or suitability valu
 
 ## Step 8: Disclaimer, once
 
-Show the health disclaimer once, now, in the output language and plain words, covering the six points in the disclaimer section of the imported nutrition file. Do not repeat it in later steps or add it to recipes. Skip it on an update run that does not touch the household, unless the user never saw it (no preferences file existed before).
+Show the health disclaimer once, now, in the output language and plain words, covering the six points in the disclaimer section of the imported nutrition file. Do not repeat it in later steps or add it to recipes. Show it on fresh onboarding and when registering a pre-existing preferences file (passed via `$ARGUMENTS` or found in the project). Skip it only on a true update of a file this skill wrote earlier.
 
 ## Step 9: Offer guidelines, then feedback
 

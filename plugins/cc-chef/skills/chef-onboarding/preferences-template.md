@@ -50,7 +50,11 @@ Written by `/cc-chef:chef-onboarding`. Other cc-chef skills read these fields by
 
 ## Dislikes
 
-<foods, flavours, and allergies or intolerances if you want them respected in every recipe>
+<foods, flavours (taste only)>
+
+## Allergies and hard exclusions
+
+<optional, default none: allergens with severity and cross-contact sensitivity; absolute religious or ethical exclusions>
 
 ## Cuisines
 
