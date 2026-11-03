@@ -12,9 +12,11 @@ argument-hint: "[optional: path(s) to saved recipe .md files to export]"
 
 # Export Recipe
 
-This skill saves a recipe as a Markdown file and converts it to the configured target. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only export-specific behaviour. Other skills end by handing over here: they say "follow `../export-recipe/SKILL.md` from step 3" with the recipe already in the conversation. Everything shown to the user is in the output language.
+This skill saves a recipe as a Markdown file and converts it to the configured target. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only export-specific behaviour. Everything shown to the user is in the output language.
 
-`$ARGUMENTS` holds zero or more paths to saved recipe files. With paths, the Markdown files already exist: skip Step 3 for them and validate them in Step 4. Without paths, the recipe in the conversation is the input.
+`$ARGUMENTS` holds zero or more paths to saved recipe files. With paths, the Markdown files already exist: skip Step 3 and validate them in Step 4. Without paths, the recipe in the conversation is the input.
+
+When another skill hands off (`create-recipe`, `rework-recipe`), it follows this skill from Step 1 with the recipe already in the conversation. Steps 1 and 2 always run; Step 3 writes the Markdown from the conversation's recipe.
 
 ## Step 1: Check the tools
 
@@ -22,11 +24,11 @@ Run `command -v python3` once, before the first script call. Without it: continu
 
 ## Step 2: Find the save folder and target
 
-Read `Recipe target` (`files`, `json-ld` or `paprika`) and `Save folder` from the registered cooking preferences. If the user names a different target in the request, use that one for this run.
+Read `Recipe target` (`files`, `json-ld` or `paprika`) and, when Step 3 will run, `Save folder` from the registered cooking preferences. If the user names a different target in the request, use that one for this run.
 
-If `Recipe target` is `tandoor`, or the user asks for Tandoor: say that Tandoor upload arrives with phase 2, save the Markdown file, and offer JSON-LD or Paprika, which Tandoor imports too.
+If `Recipe target` is `tandoor`, or the user asks for Tandoor: say that Tandoor upload arrives with phase 2, save the Markdown file (or keep the given files), and offer JSON-LD or Paprika; `export-formats.md` section 5 says which of the two Tandoor reads best.
 
-If no `Save folder` is configured, ask once where to save. Propose either an existing recipe-like folder found in the project or a new name in the output language (`Rezepte/` for German, `recipes/` for English). Create the folder once the user agrees. Then offer to store the answer: if the user agrees and a preferences file is registered, Edit only its `Save folder` field. With no preferences file, say that `/cc-chef:chef-onboarding` can store it.
+If Step 3 will run and no `Save folder` is configured, ask once where to save. Propose either an existing recipe-like folder found in the project or a new name in the output language (`Rezepte/` for German, `recipes/` for English). Create the folder once the user agrees. Then offer to store the answer: if the user agrees and a preferences file is registered, Edit only its `Save folder` field. With no preferences file, say that `/cc-chef:chef-onboarding` can store it.
 
 ## Step 3: Write the Markdown file
 
@@ -41,24 +43,24 @@ It prints a collision-free path, for example `Rezepte/rinderrouladen.md`. Withou
 ## Step 4: Validate
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" validate "<file>"
+python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" validate "<recipe.md>"
 ```
 
-Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. Exit 1 prints one `<file>:<line>: <message>` per problem. Fix those lines in the file with Edit and validate again, at most 3 rounds. If errors remain after the third round, keep the Markdown file saved and report the remaining `<file>:<line>` messages plainly, without exporting further.
+Run it once per file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. Exit 1 prints one `<file>:<line>: <message>` per problem. Fix those lines in the file with Edit and validate again, at most 3 rounds per file. If errors remain after the third round, keep the Markdown file saved and do not export it. For a batch, export the valid files and list the failing ones with their remaining `<file>:<line>` messages, plainly.
 
 ## Step 5: Convert to the target
 
 - `files`: nothing to convert. Offer JSON-LD or Paprika only if the user mentioned an app.
-- `json-ld`: one `.json` file per recipe, sharing the Markdown file's stem and placed next to it.
+- `json-ld`: one `.json` file per recipe, sharing the Markdown file's stem and placed next to it (`<recipe.json>` is the path of `<recipe.md>` with the extension swapped).
 
   ```bash
-  python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" jsonld "<file>.md" -o "<file>.json"
+  python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" jsonld "<recipe.md>" -o "<recipe.json>"
   ```
 
-- `paprika`: for one recipe, a `.paprikarecipes` archive with the file's stem next to it. For several recipes, one archive named `cc-chef-export-<YYYY-MM-DD>.paprikarecipes` next to the first file.
+- `paprika`: for one recipe, a `.paprikarecipes` archive with the file's stem next to it. For several recipes, one archive named `cc-chef-export-` plus today's date as `YYYY-MM-DD` and `.paprikarecipes` next to the first file.
 
   ```bash
-  python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" paprika "<file>.md" ... -o "<archive>.paprikarecipes"
+  python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" paprika "<recipe.md>" ... -o "<archive.paprikarecipes>"
   ```
 
 Derived files are regenerated on every export. If one already exists, replace it and tell the user it was replaced; the Markdown file itself is never touched. Check `export-formats.md` section 7 for anything the format cannot hold (ingredient groups in JSON-LD, ranges, non-English units) and tell the user in one line.
