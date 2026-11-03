@@ -22,7 +22,7 @@ Ask once, offering a default: "Any specific angle, such as a life stage, a count
 
 ## Step 3: Generate the prompt
 
-Write the prompt in English unless the user wants the research in another language or country context; then name that context in the prompt. Structure:
+Write the prompt in the user's output language by default, and name the country and life-stage context in it. Structure:
 
 - A role framing suited to the topic, for example "You are a research analyst on everyday dietary patterns...", naming no AI tool or vendor.
 - The topic, scope, country or life-stage context and any exclusions from Step 2.
@@ -43,7 +43,7 @@ Research prompt: <topic>
 ─────────────────────────────────────────────
 ```
 
-Follow it with one line, in the output language: "Paste this into the deep-research feature of whichever AI tool you use. To turn the result into a guideline the cc-chef skills apply, run `/cc-chef:dietary-guidelines` and give it the result (a file path or pasted text)."
+After the block, offer in one line an English version, which often gets better source coverage. Then add one line, in the output language: "Paste this into the deep-research feature of whichever AI tool you use. To turn the result into a guideline the cc-chef skills apply, run `/cc-chef:dietary-guidelines` and give it the result (a file path or pasted text)." If the topic is a referral condition (a renal diet, gestational diabetes, a ketogenic or fasting protocol), add that `/cc-chef:dietary-guidelines` will record clinician-set limits but will not write therapeutic rules from the research.
 
 ## Step 5: Feedback
 
