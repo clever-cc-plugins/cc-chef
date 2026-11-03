@@ -18,6 +18,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `.gitignore`                                      | Git ignore patterns                                                                            |
 | `plugins/cc-chef/.claude-plugin/plugin.json`      | Plugin manifest                                                                                |
 | `plugins/cc-chef/skills/chef-onboarding/SKILL.md` | TODO: add description                                                                          |
+| `plugins/cc-chef/skills/export-recipe/SKILL.md`   | TODO: add description                                                                          |
 | `scripts/sync-config-table.sh`                    | Keeps Key Config Files table in sync on each commit                                            |
 
 ## Don't
