@@ -47,8 +47,9 @@ class Recipe:
     notes: str
 
 
-_NUM = r"(?:\d+(?:[.,]\d+)?[¼-¾⅐-⅞]?|\d+/\d+|[¼-¾⅐-⅞])"
-_AMOUNT = re.compile(rf"^{_NUM}(?:[-–]{_NUM})?$")
+_FRAC = r"[\u00bc-\u00be\u2150-\u215e]"
+_NUM = rf"(?:\d+(?:[.,]\d+)?(?:\s+(?:\d+/\d+|{_FRAC})|{_FRAC})?|\d+/\d+|{_FRAC})"
+_AMOUNT = re.compile(rf"^({_NUM}(?:\s*[-\u2013]\s*{_NUM})?)\s*(.*)$", re.DOTALL)
 _STEP = re.compile(r"^###\s+(\d+)\.\s+(.*?)\s*$")
 _BULLET = re.compile(r"^\s*[-*]\s+(.*)$")
 
@@ -94,9 +95,9 @@ def _parse_ingredient(line: str, lineno: int) -> Ingredient:
         bold = rest[2:end].strip()
         rest = rest[end + 2:].strip()
         if bold:
-            first, _, tail = bold.partition(" ")
-            if _AMOUNT.match(first):
-                amount, unit = first, tail.strip() or None
+            m = _AMOUNT.match(bold)
+            if m:
+                amount, unit = m.group(1), m.group(2).strip() or None
             else:
                 unit = bold
     food, _, note = rest.partition(", ")
@@ -121,7 +122,7 @@ def _parse_step_body(body: list[tuple[int, str]]) -> tuple[list[Ingredient], str
 
 
 def parse_recipe(text: str) -> Recipe:
-    lines = text.splitlines()
+    lines = text.lstrip("\ufeff").splitlines()
     meta, start = _parse_frontmatter(lines)
 
     h1 = None
@@ -193,7 +194,13 @@ def unique_path(folder: Path, slug: str, ext: str = ".md") -> Path:
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     try:
-        recipe = parse_recipe(Path(args.file).read_text(encoding="utf-8"))
+        recipe = parse_recipe(Path(args.file).read_text(encoding="utf-8-sig"))
+    except OSError as e:
+        print(f"{args.file}: {e.strerror or e}", file=sys.stderr)
+        return 1
+    except UnicodeDecodeError:
+        print(f"{args.file}: file is not valid UTF-8", file=sys.stderr)
+        return 1
     except RecipeFormatError as e:
         print(f"{args.file}:{e.line}: {e.message}", file=sys.stderr)
         return 1

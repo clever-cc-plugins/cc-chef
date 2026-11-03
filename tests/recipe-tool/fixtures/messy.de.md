@@ -19,6 +19,13 @@ Ein einfacher Auflauf.
 - **2** Eier
 - **eine Prise** Salz
 - **etwas** Petersilie
+- **1-2** Knoblauchzehen
+- **500g** Mehl
+- **2EL** Öl
+- **1 ½ EL** Butter
+- **1 - 2 EL** Rum
+- **1 1/2 TL** Zimt
+- **2 EL** Sahne
 
 Alles verrühren.
 

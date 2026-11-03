@@ -39,12 +39,13 @@ class ParseTests(unittest.TestCase):
         step1 = r.steps[0]
         self.assertEqual(step1.number, 1)
         self.assertEqual(step1.title, "Rouladen füllen")
-        self.assertEqual(len(step1.ingredients), 3)
+        self.assertEqual(len(step1.ingredients), 6)
         self.assertEqual(
             step1.ingredients[0],
             rt.Ingredient("4", "Scheiben", "Rinderoberschale", "je ca. 180 g"),
         )
-        self.assertEqual(step1.ingredients[2], rt.Ingredient(None, None, "Salz", None))
+        self.assertIn(rt.Ingredient(None, None, "Salz", None), step1.ingredients)
+        self.assertIn(rt.Ingredient("4", "Scheiben", "Frühstücksspeck", None), step1.ingredients)
         self.assertIn("Küchengarn", step1.text)
         self.assertTrue(r.description.startswith("Klassische"))
         self.assertTrue(r.notes.startswith("## Hinweise"))
@@ -67,7 +68,14 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(ings[3], rt.Ingredient("2", None, "Eier", None))
         self.assertEqual(ings[4], rt.Ingredient(None, "eine Prise", "Salz", None))
         self.assertEqual(ings[5], rt.Ingredient(None, "etwas", "Petersilie", None))
-        self.assertEqual(len(ings), 6)
+        self.assertEqual(ings[6], rt.Ingredient("1-2", None, "Knoblauchzehen", None))
+        self.assertEqual(ings[7], rt.Ingredient("500", "g", "Mehl", None))
+        self.assertEqual(ings[8], rt.Ingredient("2", "EL", "Öl", None))
+        self.assertEqual(ings[9], rt.Ingredient("1 ½", "EL", "Butter", None))
+        self.assertEqual(ings[10], rt.Ingredient("1 - 2", "EL", "Rum", None))
+        self.assertEqual(ings[11], rt.Ingredient("1 1/2", "TL", "Zimt", None))
+        self.assertEqual(ings[12], rt.Ingredient("2", "EL", "Sahne", None))
+        self.assertEqual(len(ings), 13)
         # bullets after instruction text belong to the text
         self.assertIn("- Dieser Punkt gehört zum Text", r.steps[0].text)
         self.assertEqual(r.steps[1].ingredients, [])
@@ -116,6 +124,27 @@ class CliTests(unittest.TestCase):
         p = run_cli("validate", FIX / "broken.md")
         self.assertEqual(p.returncode, 1)
         self.assertIn("broken.md:10:", p.stdout + p.stderr)
+
+    def test_validate_missing_file(self):
+        p = run_cli("validate", FIX / "nope.md")
+        self.assertEqual(p.returncode, 1)
+        self.assertIn("nope.md:", p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+
+    def test_validate_non_utf8(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "x.md"
+            f.write_bytes(b"---\ntitle: \xff\xfe\n---\n")
+            p = run_cli("validate", f)
+            self.assertEqual(p.returncode, 1)
+            self.assertNotIn("Traceback", p.stderr)
+
+    def test_validate_bom(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "x.md"
+            f.write_bytes(b"\xef\xbb\xbf" + (FIX / "shakshuka.en.md").read_bytes())
+            p = run_cli("validate", f)
+            self.assertEqual(p.returncode, 0, p.stderr)
 
     def test_newpath(self):
         with tempfile.TemporaryDirectory() as d:

@@ -69,7 +69,7 @@ python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" newpath <folder>
 
 ## Without python3
 
-If `python3` is not available, still save the recipe: write the Markdown by hand following the rules above, including the slug rules for the file name and a check that the step numbers run 1..n and every `**` is closed. Tell the user once that the automatic check was skipped.
+If `python3` is not available, both validation and the JSON-LD and Paprika export are unavailable, because they run through the tool. Saving still works: write the Markdown by hand following the rules above, including the slug rules for the file name and a check that the step numbers run 1..n and every `**` is closed. Tell the user once that the automatic check was skipped and that the export formats cannot be produced until Python 3.9 or newer is installed.
 
 ## Example (German)
 
@@ -98,6 +98,9 @@ Klassische Sonntagsrouladen mit dunkler Soße, gefüllt mit Senf, Speck, Zwiebel
 
 - **4 Scheiben** Rinderoberschale, je ca. 180 g
 - **2 EL** Senf, mittelscharf
+- **4 Scheiben** Frühstücksspeck
+- **2** Zwiebeln, in Streifen
+- **2** Gewürzgurken, längs geviertelt
 - Salz
 
 Das Fleisch zwischen Folie dünn klopfen, mit etwas Salz und dem Senf bestreichen. Mit Speck, Zwiebelstreifen und Gurkenfächer belegen, aufrollen und mit Küchengarn fixieren.
