@@ -24,7 +24,7 @@ The user has opted in by asking for this skill. Show the health disclaimer once 
 
 Screening runs before any guideline content is drafted. Ask who the guideline is for (the household members, with life stage and country; reuse `Household` from the preferences if registered). Then screen each member, one plain question per topic group, and tell the user they can skip any of it. Screening topics include medicines and food interactions, kidney disease, diabetes on insulin or sulfonylureas, anticoagulants, pregnancy and any complication, eating-disorder history, allergies or anaphylaxis, a child's faltering growth or feeding refusal, alarm signs (unintended weight loss, trouble swallowing, blood in stool), and requests for a medical diet or supplements, plus the other triggers in section 6.1 of the nutrition file.
 
-A referral condition may also come up later, in research results or in passing. The rule applies at any point of the conversation. Not every screening topic is a referral condition: allergies and pregnancy without complications are handled by hard constraints and safety rules, and need no referral.
+A referral condition may also come up later, in research results or in passing. The rule applies at any point of the conversation. Not every screening topic is a referral condition: allergies without anaphylaxis, without multiple allergies in a child, without uncertain reactions and without a proposed home food challenge, and uncomplicated pregnancy, need no referral. They are handled by hard constraints and safety rules. The allergy guards of section 6.2 (never test tolerance, never accept "may contain", never guarantee allergen-free, ask to confirm labels) apply to every allergy, referred or not.
 
 ## Step 3: Referral conditions
 
@@ -33,9 +33,11 @@ For a member with a referral condition in section 6.1, apply that condition's ro
 1. Say the limit once, calmly, and point to the right professional (doctor, registered dietitian or pharmacist, as the row fits).
 2. A referred member still gets Profile, Hard constraints, Automatic safety rules and Review triggers. Only the soft targets are withheld or limited, exactly as the row says. A referred pregnant member keeps every pregnancy safety rule and hard constraint.
 3. Offer to record limits the clinician has set, verbatim as the user reports them, as hard constraints with who set them and when. Never extend, round, adjust or "optimise" them, and never set limits of your own.
-4. Medicine-related food rules (section 6.2: grapefruit, vitamin K steadiness, potassium salts) are written as hard constraints for any member screened positive, even when the user gives no clinician numbers. For a medicine-interaction trigger such as a statin, flag the interaction (grapefruit) and refer the interaction question to the pharmacist or prescriber; the member keeps the everyday core and the graded levers of section 2.
+4. Medicine-related food rules (section 6.2: grapefruit, steady vitamin K intake for vitamin K antagonists only, such as warfarin and phenprocoumon, since DOACs have no comparable food rule; potassium salts) are written as hard constraints for any member screened positive, even when the user gives no clinician numbers. For a medicine-interaction trigger such as a statin, flag the interaction (grapefruit) and refer the interaction question to the pharmacist or prescriber; the member keeps the everyday core and the graded levers of section 2.
 5. Eating-disorder history: neutral language, no targets, calories, macros, food lists or body size; signpost specialist help.
 6. Potassium-based salt substitutes follow the screening gate in section 2.4: never for pregnancy, children, kidney disease, potassium-sparing diuretics, ACE inhibitors, ARBs or potassium supplements, and never when any answer is unknown. At most an optional adult branch, never the shared base. If the gate is not clear, do not mention them.
+
+For a trigger without its own row in section 6.2 (a child's faltering growth or feeding refusal, cancer treatment, liver or pancreatic disease, malabsorption, MAOIs, immunosuppressants): decline therapeutic rules, refer, and apply the last (general) row.
 
 Other household members proceed normally. If the user asks for a therapeutic guideline in a listed condition, the last row of section 6.2 applies.
 

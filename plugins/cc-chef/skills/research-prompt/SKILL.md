@@ -22,7 +22,7 @@ Ask once, offering a default: "Any specific angle, such as a life stage, a count
 
 ## Step 3: Generate the prompt
 
-Write the prompt in the user's output language by default, and name the country and life-stage context in it. Structure:
+Write the prompt in the user's output language by default, and name the country in it, and a life stage only if Step 2 gave one. No personal data goes into the prompt. Structure:
 
 - A role framing suited to the topic, for example "You are a research analyst on everyday dietary patterns...", naming no AI tool or vendor.
 - The topic, scope, country or life-stage context and any exclusions from Step 2.

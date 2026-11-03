@@ -33,9 +33,9 @@ Every hard constraint and safety rule of anyone at the table, so one shared base
 
 No calorie, weight, carbohydrate-for-insulin or renal targets; a clinician-set figure goes in Hard constraints, verbatim.
 
-| Target                                                               | Unit and horizon  | Evidence source        | Certainty                                                                             | Origin                                                                                      |
-| -------------------------------------------------------------------- | ----------------- | ---------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <e.g. fibre about 25-30 g, saturated fat under 10 percent of energy> | <per day or week> | <guide, trial, report> | <strong, moderate, low, consensus or design; single-source claims marked (to verify)> | <official guide, clinician, or user for non-therapeutic frequency or food-group goals only> |
+| Target                                                               | Unit and horizon  | Evidence source        | Certainty                                                                             | Origin                                                                                                                                                            |
+| -------------------------------------------------------------------- | ----------------- | ---------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <e.g. fibre about 25-30 g, saturated fat under 10 percent of energy> | <per day or week> | <guide, trial, report> | <strong, moderate, low, consensus or design; single-source claims marked (to verify)> | <official guide, clinician (non-numeric advice; numeric clinician limits go to Hard constraints), or user for non-therapeutic frequency or food-group goals only> |
 
 ### Preferences
 
