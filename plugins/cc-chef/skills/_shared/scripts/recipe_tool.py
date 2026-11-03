@@ -48,7 +48,7 @@ class Recipe:
 
 
 _FRAC = r"[\u00bc-\u00be\u2150-\u215e]"
-_NUM = rf"(?:\d+(?:[.,]\d+)?(?:\s+(?:\d+/\d+|{_FRAC})|{_FRAC})?|\d+/\d+|{_FRAC})"
+_NUM = rf"(?:\d+/\d+|\d+(?:[.,]\d+)?(?:\s+(?:\d+/\d+|{_FRAC})|{_FRAC})?|{_FRAC})"
 _AMOUNT = re.compile(rf"^({_NUM}(?:\s*[-\u2013]\s*{_NUM})?)\s*(.*)$", re.DOTALL)
 _STEP = re.compile(r"^###\s+(\d+)\.\s+(.*?)\s*$")
 _BULLET = re.compile(r"^\s*[-*]\s+(.*)$")

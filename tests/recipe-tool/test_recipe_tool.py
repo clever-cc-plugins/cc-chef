@@ -114,6 +114,21 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(c.exception.line, 9)
 
 
+class IngredientTests(unittest.TestCase):
+    def test_plain_fractions_and_nbsp(self):
+        cases = {
+            "- **1/2 TL** x": ("1/2", "TL"),
+            "- **3/4 l** x": ("3/4", "l"),
+            "- **1/2** x": ("1/2", None),
+            "- **2\u00a0EL** x": ("2", "EL"),
+            "- **1 1/2 TL** x": ("1 1/2", "TL"),
+        }
+        for line, expected in cases.items():
+            with self.subTest(line=line):
+                ing = rt._parse_ingredient(line, 1)
+                self.assertEqual((ing.amount, ing.unit), expected)
+
+
 class CliTests(unittest.TestCase):
     def test_validate_ok(self):
         p = run_cli("validate", FIX / "rouladen.de.md")
