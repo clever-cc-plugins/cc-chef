@@ -20,7 +20,7 @@ argument-hint: "[optional: ingredients, a mood, a dish name, or a photo path]"
 
 # Create Recipe
 
-This skill turns a mood, an ingredient list, a photo or a named dish into ideas and then one full recipe of grounded everyday quality: comfort food, traditional fare, rustic home cooking, with one deliberate touch that makes it worth remembering; never experimental or star-chef. It follows `../_shared/skill-contract.md` (language, address form, tone and the hard-constraint check included); the steps below are its own work and its hand-off to `export-recipe`. Everything shown to the user is in the output language.
+This skill turns a mood, an ingredient list, a photo or a named dish into ideas and then one full recipe of grounded everyday quality: comfort food, traditional fare, rustic home cooking, with one deliberate touch that makes it worth remembering; never experimental or star-chef. It follows `../_shared/skill-contract.md` (language, address form, tone and the hard-constraint check included); the steps below are its own work and its hand-off to `export-recipe`. Everything shown to the user is in the output language. The first reply opens with the contract's framing line (its Step 2), before any idea, question or recipe.
 
 Where a web-search tool is available, ground ideas and traditional dishes in real recipes found on the web; found recipes are inspiration, never text to copy. Without one, rely on the reference files.
 
