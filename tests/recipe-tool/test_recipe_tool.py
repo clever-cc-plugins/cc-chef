@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 import tempfile
@@ -114,6 +115,33 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(c.exception.line, 9)
 
 
+class StrictnessTests(unittest.TestCase):
+    def test_block_list_tags(self):
+        r = rt.parse_recipe("---\ntitle: X\ntags:\n  - Suppe\n  - \"Schnell\"\nservings: 2\n---\n\n### 1. A\n\nx\n")
+        self.assertEqual(r.meta["tags"], ["Suppe", "Schnell"])
+        self.assertEqual(r.meta["servings"], 2)
+
+    def test_frontmatter_line_without_colon(self):
+        with self.assertRaises(rt.RecipeFormatError) as c:
+            rt.parse_recipe("---\ntitle: X\nservings 2\n---\n\n### 1. A\n\nx\n")
+        self.assertEqual(c.exception.line, 3)
+
+    def test_stray_list_item_in_frontmatter(self):
+        with self.assertRaises(rt.RecipeFormatError) as c:
+            rt.parse_recipe("---\ntitle: X\nservings: 2\n- a\n---\n\n### 1. A\n\nx\n")
+        self.assertEqual(c.exception.line, 4)
+
+    def test_heading_between_steps(self):
+        with self.assertRaises(rt.RecipeFormatError) as c:
+            rt.parse_recipe("---\ntitle: X\n---\n\n### 1. A\n\nx\n\n## Soße\n\n### 2. B\n\ny\n")
+        self.assertEqual(c.exception.line, 9)
+        self.assertIn("notes", c.exception.message)
+
+    def test_non_ascii_digits_stay_string(self):
+        r = rt.parse_recipe("---\ntitle: X\nservings: \u00b2\n---\n\n### 1. A\n\nx\n")
+        self.assertEqual(r.meta["servings"], "\u00b2")
+
+
 class IngredientTests(unittest.TestCase):
     def test_plain_fractions_and_nbsp(self):
         cases = {
@@ -167,6 +195,14 @@ class CliTests(unittest.TestCase):
             p = run_cli("newpath", d, "Käsespätzle")
             self.assertEqual(p.returncode, 0)
             self.assertEqual(p.stdout.strip(), str(Path(d) / "kasespatzle-2.md"))
+
+    def test_newpath_expands_user(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {**os.environ, "HOME": d}
+            p = subprocess.run(
+                [sys.executable, str(TOOL), "newpath", "~/Rezepte", "Suppe"], capture_output=True, text=True, env=env
+            )
+            self.assertEqual(p.stdout.strip(), str(Path(d) / "Rezepte" / "suppe.md"))
 
 
 class SlugTests(unittest.TestCase):

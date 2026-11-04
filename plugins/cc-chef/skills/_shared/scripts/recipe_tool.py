@@ -67,7 +67,7 @@ def _parse_value(raw: str) -> object:
     if raw.startswith("[") and raw.endswith("]"):
         return [_unquote(p) for p in raw[1:-1].split(",") if p.strip()]
     value = _unquote(raw)
-    if raw.isdigit():
+    if raw.isascii() and raw.isdigit():
         return int(raw)
     return value
 
@@ -84,12 +84,29 @@ def _parse_frontmatter(lines: list[str]) -> tuple[dict[str, object], int]:
     if not lines or lines[0].strip() != "---":
         raise RecipeFormatError(1, "missing frontmatter (file must start with '---')")
     meta: dict[str, object] = {}
+    block_key: str | None = None  # key whose value is a block list (`key:` then `- item` lines)
     for i in range(1, len(lines)):
-        if lines[i].strip() == "---":
+        line = lines[i]
+        if line.strip() == "---":
             return meta, i + 1
-        key, sep, value = lines[i].partition(":")
-        if sep and key.strip():
-            meta[key.strip()] = _parse_value(value)
+        item = _BULLET.match(line)
+        if item and block_key is not None:
+            if not isinstance(meta[block_key], list):
+                meta[block_key] = []
+            meta[block_key].append(_unquote(item.group(1)))
+            continue
+        if not line.strip():
+            continue
+        key, sep, value = line.partition(":")
+        if not sep or not key.strip():
+            raise RecipeFormatError(i + 1, "frontmatter line is not 'key: value'")
+        key = key.strip()
+        if value.strip():
+            block_key = None
+            meta[key] = _parse_value(value)
+        else:
+            block_key = key
+            meta[key] = ""
     raise RecipeFormatError(1, "frontmatter is not closed (missing second '---')")
 
 
@@ -143,6 +160,13 @@ def parse_recipe(text: str) -> Recipe:
             h1 = (i, lines[i][2:].strip())
     # notes start at the first "## " heading after the last step
     last_step_idx = step_heads[-1][0] if step_heads else -1
+    if step_heads:
+        for i in range(step_heads[0][0], last_step_idx):
+            if lines[i].startswith("## "):
+                raise RecipeFormatError(
+                    i + 1,
+                    "a step section can't be interrupted by a '## ' heading; move it to the notes after the last step",
+                )
     notes_idx = next(
         (i for i in range(last_step_idx + 1, len(lines)) if lines[i].startswith("## ")),
         None,
@@ -264,8 +288,9 @@ def to_jsonld(r: Recipe) -> dict:
     d["recipeInstructions"] = [
         {"@type": "HowToStep", "name": s.title, "text": s.text} for s in r.steps
     ]
-    if r.meta.get("source-url"):
-        d["isBasedOn"] = str(r.meta["source-url"])
+    based_on = {"name": r.meta.get("source"), "url": r.meta.get("source-url")}
+    if any(based_on.values()):
+        d["isBasedOn"] = {"@type": "CreativeWork", **{k: str(v) for k, v in based_on.items() if v}}
     return d
 
 
@@ -288,7 +313,7 @@ def to_paprika(r: Recipe) -> dict:
         "prep_time": mins(_minutes(r, "prep-minutes")),
         "cook_time": mins(_minutes(r, "cook-minutes")),
         "total_time": mins(_total_minutes(r)),
-        "notes": r.notes,
+        "notes": re.sub(r"^#+\s*", "", r.notes, flags=re.MULTILINE),
         "description": r.description,
         "source": str(r.meta.get("source", "")),
         "source_url": str(r.meta.get("source-url", "")),
@@ -344,7 +369,7 @@ def _cmd_paprika(args: argparse.Namespace) -> int:
 
 
 def _cmd_newpath(args: argparse.Namespace) -> int:
-    print(unique_path(Path(args.folder), slugify(args.title)))
+    print(unique_path(Path(args.folder).expanduser(), slugify(args.title)))
     return 0
 
 

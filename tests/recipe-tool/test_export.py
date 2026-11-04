@@ -33,7 +33,14 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(len(d["recipeInstructions"]), len(r.steps))
         self.assertEqual(d["inLanguage"], "de")
         self.assertEqual(d["keywords"], "Hauptgericht, Schmoren")
-        self.assertEqual(d["isBasedOn"], "https://example.com/rinderrouladen")
+        self.assertEqual(
+            d["isBasedOn"],
+            {
+                "@type": "CreativeWork",
+                "name": "Adapted from Rinderrouladen klassisch, Beispielautorin, beispiel-kochbuch.de",
+                "url": "https://example.com/rinderrouladen",
+            },
+        )
         self.assertEqual(d["recipeInstructions"][0]["@type"], "HowToStep")
 
     def test_jsonld_omits_empty_and_bad_times(self):
@@ -44,6 +51,19 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(d["recipeYield"], "vier")
         self.assertNotIn("isBasedOn", d)
         self.assertNotIn("description", d)
+
+    def test_jsonld_is_based_on_variants(self):
+        d = rt.to_jsonld(make("source: Omas Heft\n"))
+        self.assertEqual(d["isBasedOn"], {"@type": "CreativeWork", "name": "Omas Heft"})
+        d = rt.to_jsonld(make("source-url: https://example.com/x\n"))
+        self.assertEqual(d["isBasedOn"], {"@type": "CreativeWork", "url": "https://example.com/x"})
+
+    def test_paprika_notes_have_no_heading_markers(self):
+        r = rt.parse_recipe(
+            "---\ncc-chef: 1\ntitle: T\n---\n\n# T\n\n### 1. A\n\nx\n\n## Hinweise\n\n- a\n\n### Kleinteil\n\nb\n"
+        )
+        self.assertTrue(r.notes.startswith("## Hinweise"))
+        self.assertEqual(rt.to_paprika(r)["notes"], "Hinweise\n\n- a\n\nKleinteil\n\nb")
 
     def test_paprika_times_and_hash(self):
         p = rt.to_paprika(make("prep-minutes: 5\ncook-minutes: 120\n"))
