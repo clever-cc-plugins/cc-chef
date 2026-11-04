@@ -71,6 +71,6 @@ The guideline file is the detailed source of hard constraints. Compare its hard 
    | Dietary guidelines | `context/dietary-guidelines.md` | Dietary guidelines, allergens, hard constraints, nutrition targets, per household member |
    ```
 
-   Do not add a duplicate row for a file already registered. Do not hand-edit the Key Config Files table.
+   Do not add a duplicate row for a file already registered. Do not hand-edit the Key Config Files table. Edit the existing `CLAUDE.md` in place: add a row to the table, or append the `## Context files` section if it is missing; never rewrite or overwrite the file (no `cat >`). If the `CLAUDE.md` does not exist yet, creating it is fine.
 
 Then summarise in a few lines what was written, what was left out and why, and where the review triggers are. End with the contract's Step 5 (feedback and learnings), tag `[cc-chef:dietary-guidelines]`.

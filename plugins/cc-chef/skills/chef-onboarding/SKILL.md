@@ -35,7 +35,7 @@ Ask in this order, one question each, with the default in brackets:
 3. Units: metric or imperial, and weights preferred over volumes or not (metric, weights preferred).
 4. Default servings (2).
 5. Recipe layout: `ingredients-up-front` (one ingredient list, then the steps) or `per-step` (ingredients listed with each step) (ingredients-up-front).
-6. Separate "preparation" from "cooking" in the method (no).
+6. Separate "preparation" from "cooking" in the method (yes).
 
 ## Step 4: Interview, part 2: household and kitchen
 
@@ -71,7 +71,7 @@ Ask once: "Do you already have a list of foods with nutrient or suitability valu
    | Food list           | `<path>`                         | <column description from Step 6>                                            |
    ```
 
-   Do not hand-edit the Key Config Files table; the pre-commit hook owns it. Do not add a duplicate row for a file already registered; for an update, change the Summary only if the content changed.
+   Do not hand-edit the Key Config Files table; the pre-commit hook owns it. Do not add a duplicate row for a file already registered; for an update, change the Summary only if the content changed. Edit the existing `CLAUDE.md` in place: add a row to the table, or append the `## Context files` section if it is missing; never rewrite or overwrite the file (no `cat >`). If the `CLAUDE.md` does not exist yet, creating it is fine.
 
 3. Create the save folder if it does not exist yet.
 
