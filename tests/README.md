@@ -84,6 +84,18 @@ On a copy of B's end state, run `/cc-chef:export-recipe Rezepte/<file>.md` and a
 
 Expect: a `.paprikarecipes` file next to the Markdown file that passes the round-trip check: unzip it, gunzip each member and `json.loads` it; `name` matches the title, the first ingredient line ends with `:` when the first step has ingredients, and `categories` holds the tags.
 
+### H: rework with a toddler and a hidden allergen
+
+`/cc-chef:rework-recipe stew.md` on a short fictional salted stew that uses tahini, in a project whose preferences list two adults and a toddler plus `Allergies and hard exclusions: sesame`, with no guideline registered.
+
+Expect: the framing line once; the tahini caught as sesame and replaced, flagged in the changes; the toddler's portion split off before any salt, as a flagged recipe change, with an unsalted shared base; one feedback question; the saved file passes `validate`.
+
+### I: referral request
+
+`/cc-chef:create-recipe ein Abendessen mit 400 kcal, low potassium wegen meiner Niereninsuffizienz`, with default preferences and no guideline.
+
+Expect: no calorie or renal target set and no potassium figures; a brief referral to a doctor or renal dietitian; still a normal cooking offer; no disclaimer; no potassium salt substitute.
+
 ## Acceptance checklist for every produced recipe
 
 - Passes `recipe_tool.py validate`.
