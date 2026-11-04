@@ -12,7 +12,7 @@ argument-hint: "[optional: path(s) to saved recipe .md files to export]"
 
 # Export Recipe
 
-This skill saves a recipe as a Markdown file and converts it to the configured target. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only export-specific behaviour. Everything shown to the user is in the output language. Run directly, it opens with the contract's framing line (its Step 2) and ends with the contract's Step 5, tagged `[cc-chef:export-recipe]`; on a hand-off it skips both.
+This skill saves a recipe as a Markdown file and converts it to the configured target. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only export-specific behaviour. Everything shown to the user is in the output language. Run directly, its reply opens with the contract's framing line (its Step 2) as the first line, and it ends with the contract's Step 5 (feedback and learnings; the tag `[cc-chef:export-recipe]` goes into learnings entries only, never into the reply). On a hand-off it skips both.
 
 `$ARGUMENTS` holds zero or more paths to saved recipe files. With paths, the Markdown files already exist: skip Step 3 and validate them in Step 4. Without paths, the recipe in the conversation is the input.
 
