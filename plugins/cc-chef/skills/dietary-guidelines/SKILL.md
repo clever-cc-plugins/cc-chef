@@ -14,7 +14,7 @@ argument-hint: "[optional: path to research results or an existing guideline to 
 
 This skill drafts an opt-in personal guideline context file and registers it. It follows `../_shared/skill-contract.md` (language, address form, tone and the step sequence); the steps below are its own work (Step 3 of the contract). Step 4 of the contract (output, save or export) here means writing and registering the guideline, not a recipe.
 
-Ask one question at a time, offer a default where one makes sense, and wait for the answer. Never read anything under `docs/owner-inputs/`. Record only what the guideline needs; health details are sensitive.
+Ask one question at a time, offer a default where one makes sense, and wait for the answer. Record only what the guideline needs; health details are sensitive.
 
 ## Step 1: Disclaimer, once
 

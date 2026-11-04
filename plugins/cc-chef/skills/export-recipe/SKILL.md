@@ -8,7 +8,7 @@ argument-hint: "[optional: path(s) to saved recipe .md files to export]"
 
 @../\_shared/recipe-format.md **Read when:** writing the Markdown file, naming it by hand, or fixing a validation error
 
-@../\_shared/export-formats.md **Read when:** the user asks which target fits their app, or the recipe has ingredient groups, ranges or other content a format cannot hold
+@../\_shared/export-formats.md **Read when:** the user asks which target fits their app, or the recipe has step titles that act as ingredient groups, ranges or other content a format cannot hold
 
 # Export Recipe
 
@@ -24,7 +24,7 @@ Run `command -v python3` once, before the first script call. Without it: continu
 
 ## Step 2: Find the save folder and target
 
-Read `Recipe target` (`files`, `json-ld` or `paprika`) and, when Step 3 will run, `Save folder` from the registered cooking preferences. If the user names a different target in the request, use that one for this run.
+Read `Recipe target` (`files`, `json-ld` or `paprika`; `files` when there are no preferences) and, when Step 3 will run, `Save folder` from the registered cooking preferences. If the user names a different target in the request, use that one for this run.
 
 If `Recipe target` is `tandoor`, or the user asks for Tandoor: say that Tandoor upload arrives with phase 2, save the Markdown file (or keep the given files), and offer JSON-LD or Paprika; `export-formats.md` section 5 says which of the two Tandoor reads best.
 
@@ -38,7 +38,9 @@ Choose the path:
 python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" newpath "<save folder>" "<title>"
 ```
 
-It prints a collision-free path, for example `Rezepte/rinderrouladen.md`. Without python3, apply the slug rules from `recipe-format.md` by hand and check that the file does not exist; add `-2`, `-3` and so on if it does. Write the recipe with the Write tool in the fixed layout of `recipe-format.md`, whatever display layout the conversation used. Never overwrite an existing Markdown file.
+`${CLAUDE_SKILL_DIR}` is the directory of this `SKILL.md`; if it stays literal or empty because another skill read this file instead of invoking it, use the directory of this file instead (the `_shared` folder is its sibling).
+
+It prints a collision-free path, for example `Rezepte/rinderrouladen.md`. Without python3, apply the slug rules from `recipe-format.md` by hand and check that the file does not exist; add `-2`, `-3` and so on if it does. Write the recipe with the Write tool in the fixed layout of `recipe-format.md`, whatever display layout the conversation used. Never overwrite an existing Markdown recipe file.
 
 ## Step 4: Validate
 
@@ -46,7 +48,7 @@ It prints a collision-free path, for example `Rezepte/rinderrouladen.md`. Withou
 python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" validate "<recipe.md>"
 ```
 
-Run it for each file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. Exit 1 prints one `<file>:<line>: <message>` per problem. Fix those lines in the file with Edit and validate again, at most 3 rounds per file. If errors remain after the third round, keep the Markdown file saved and do not export it. For a batch, export the valid files and list the failing ones with their remaining `<file>:<line>` messages, plainly.
+Run it for each file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. Exit 1 prints one `<file>:<line>: <message>` for the first problem only, because the tool stops at the first error. Fix that line in the file with Edit and validate again, at most 3 rounds per file; a fix may reveal the next error. If errors remain after the third round, keep the Markdown file saved and do not export it. For a batch, export the valid files and list the failing ones with their remaining `<file>:<line>` messages, plainly.
 
 ## Step 5: Convert to the target
 
@@ -63,7 +65,7 @@ Run it for each file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. E
   python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" paprika "<recipe.md>" ... -o "<archive.paprikarecipes>"
   ```
 
-Derived files are regenerated on every export. If one already exists, replace it and tell the user it was replaced; the Markdown file itself is never touched. Check `export-formats.md` section 7 for anything the format cannot hold (ingredient groups in JSON-LD, ranges, non-English units) and tell the user in one line.
+Derived files are regenerated on every export. If one already exists, replace it and tell the user it was replaced; the Markdown file itself is never touched. Check `export-formats.md` section 7 for anything the format cannot hold (step titles as ingredient groups in JSON-LD, ranges, non-English units) and tell the user in one line. For `json-ld`, if the recipe has notes, tell the user that the notes (originals, conversions, serving tips) are not in the JSON-LD file and stay in the Markdown file; for either format, say that `signature` and `oven` are not carried unless they appear in the step text.
 
 ## Step 6: Report
 

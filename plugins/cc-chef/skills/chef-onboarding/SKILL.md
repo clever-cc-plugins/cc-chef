@@ -12,7 +12,7 @@ argument-hint: "[optional: path to an existing food list or preferences file to 
 
 This skill sets up a cooking preferences file and registers it, and any food list the user already has, in the `## Context files` table of `CLAUDE.md`. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only onboarding-specific behaviour. Step 4 of the contract (output, save or export) does not apply: this skill writes context, not a recipe.
 
-Ask one question at a time and wait for the answer. Offer a default with every question; Enter or "default" accepts it. Never read anything under `docs/owner-inputs/`.
+Ask one question at a time and wait for the answer. Offer a default with every question; Enter or "default" accepts it.
 
 ## Step 1: Discover existing context
 

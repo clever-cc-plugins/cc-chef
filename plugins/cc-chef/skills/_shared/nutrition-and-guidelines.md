@@ -325,7 +325,7 @@ Shown once during onboarding, plain language, in the user's language. It must sa
 5. Guidance follows a named national authority chosen from the user's country, and some countries differ.
 6. For a suspected allergic or medical emergency, call the local emergency number.
 
-The disclaimer supplements the behaviour in section 6 and never excuses behaviour that crosses it. Health and allergy details are sensitive personal data: record only what the guideline needs, and keep owner-private material out of the public repo.
+The disclaimer supplements the behaviour in section 6 and never excuses behaviour that crosses it. Health and allergy details are sensitive personal data: record only what the guideline needs.
 
 ## 8. Nutrient data
 
@@ -407,5 +407,5 @@ US DGA 2025-2030 details and the ACC statement (Claude); DGE dairy and egg numbe
 
 - Condition-specific diet plans, supplement doses, iron supplementation schedules, and low-FODMAP or dysphagia texture guidance: out of scope, referral material.
 - EAT-Lancet quantities and the 15-million-deaths figure (model projection, not an observed outcome).
-- Product, regulatory and legal worklists in the reports (medical-device classification, GDPR duties, app-store review): launch tasks for the owner, not cooking knowledge. The plugin keeps to general-wellness behaviour and gets legal review per market before any change of scope.
+- Product, regulatory and legal worklists in the reports (medical-device classification, GDPR duties, app-store review): product and legal matters, not cooking knowledge. The plugin keeps to general-wellness behaviour.
 - Hazard limits for leftovers, reheating, listeria and mercury: see `food-safety.md`.

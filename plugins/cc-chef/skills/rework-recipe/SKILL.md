@@ -14,7 +14,7 @@ argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe fi
 
 @../\_shared/food-safety.md **Read when:** the source holds a safety warning or a high-risk step (section 6), the household has a vulnerable member (section 7), or the region's rules decide a time or temperature (section 2); the final checklist is section 10
 
-@../\_shared/nutrition-and-guidelines.md **Read when:** the user asks to adapt the recipe to a guideline, or `Household` lists an infant, toddler, child, pregnant or older member (cooking levers in section 2, life-stage rules in section 3, base plus branch in section 5.2, descriptive wording in section 7.1)
+@../\_shared/nutrition-and-guidelines.md **Read when:** the user mentions a condition, a medicine, or a calorie, weight or carbohydrate target (referral, section 6), `Allergies and hard exclusions` is set or the request names an allergy or exclusion (compound items and cross-contact, section 4), the user asks to adapt the recipe to a guideline, or `Household` lists an infant, toddler, child, pregnant or older member (cooking levers in section 2, life-stage rules in section 3, base plus branch in section 5.2, descriptive wording in section 7.1)
 
 @../\_shared/recipe-format.md **Read when:** placing the source line, the original values and the conversion convention in the saved file (frontmatter `source` and `source-url`, the notes section)
 
@@ -39,7 +39,9 @@ Keep the source text and its provenance (author, title, site or book, URL) apart
 
 Collect the hard constraints before reworking: `Allergies and hard exclusions`, the `Household` life stages and any registered guideline. A source ingredient that breaks one is substituted and flagged, or the user is told that no safe version exists. Never keep it for fidelity.
 
-When the request does not say what to change, assume a restructure to the preferences (house style, language, units) and do not ask. Scale, substitute or adapt to a guideline only when the request asks or hints at it; adapting to a guideline happens only on request. Keep the dish's identity core (`culinary-craft.md` section 4) or label the result a variation; never call a modified traditional dish "authentic".
+A household with an infant or toddler, in `Household` or named in the request, gets base plus branch as set out in the contract's "Household: base plus branch" section. When the source has no such split, adding the split step is a recipe change and is flagged.
+
+When the request does not say what to change, assume a restructure to the preferences (house style, language, units) and do not ask. Scale, substitute or adapt to a guideline only when the request asks or hints at it; adapting to a guideline happens only on request, and then lean the recipe toward registered soft targets and guideline preferences, meeting per-person targets through branches (`nutrition-and-guidelines.md` section 5.2, rule 3), with no nutrition claims. Keep the dish's identity core (`culinary-craft.md` section 4) or label the result a variation; never call a modified traditional dish "authentic".
 
 ## Step 3: Detect the source locale
 
@@ -55,9 +57,9 @@ Recipe changes are each flagged: volume to weight with ingredient-specific densi
 
 Rewrite the method in neutral wording of your own. Drop the source headnote and personal story; do not paraphrase them closely. Never copy method prose, photos or distinctive wording.
 
-Build the result as one structured model: title, servings, times, tags, oven mode and temperatures, ordered steps that each carry the ingredients they use (an ingredient used in two steps is split between them), and notes. `export-recipe` saves exactly this.
+Build the result as one structured model: title, language, servings, times, tags, oven mode and temperatures, ordered steps that each carry the ingredients they use (an ingredient used in two steps is split between them), and notes. `export-recipe` saves exactly this.
 
-Before showing it, run the `culinary-craft.md` section 5.1 checklist silently and fix what fails, then reconcile against the source: every ingredient used, allocations add up, optional items still optional, warnings kept. Run the `food-safety.md` section 10 checklist. Never print a checklist.
+Before showing it, run the `culinary-craft.md` section 5.1 checklist silently; for anything that fails, suggest a change instead of making it, because a change to the recipe is a flagged recipe change; then reconcile against the source: every ingredient used, allocations add up, optional items still optional, warnings kept. Run the `food-safety.md` section 10 checklist. A safety note goes at the point of use, in the step itself (`recipe-writing.md` section 4.4), not only in the notes. Never print a checklist.
 
 ## Step 5: Show it in chat
 
