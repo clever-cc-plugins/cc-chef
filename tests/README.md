@@ -44,7 +44,7 @@ For every recipe file a scenario produces, run `python3 plugins/cc-chef/skills/_
 
 ### A: onboarding, German
 
-`/cc-chef:chef-onboarding`, answers in German: region Germany, household two adults and a toddler, target `files`. Register a copy of the maintainer's own food list placed in the scratch project (never a file in the repo, never committed).
+`/cc-chef:chef-onboarding`, answers in German: region Germany, household two adults and a toddler, target `files`. Register a copy of any food-list CSV (or a fictional one) placed in the scratch project (never a file in the repo, never committed).
 
 Expect: the proposed save folder is German (for example `Rezepte/`); the preferences file and the food list are registered in the `## Context files` table with descriptive Summaries; the health disclaimer appears once; `/cc-chef:dietary-guidelines` is offered once at the end.
 

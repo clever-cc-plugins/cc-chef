@@ -7,6 +7,7 @@ Captured during brainstorming on 2026-11-01. This is not a design. The plugin de
 - Done: brainstorming on intent and scope; five research prompts in `docs/research-prompts/`; research results in `docs/research/`.
 - Done: plugin design, approved by the owner on 2026-11-02: [docs/superpowers/specs/2026-11-02-cc-chef-design.md](superpowers/specs/2026-11-02-cc-chef-design.md). It supersedes this note wherever they differ.
 - Next: implementation plan (superpowers:writing-plans), then build per the [cc-plugin-repo-guideline](https://github.com/clever-cc-plugins/marketplace/blob/main/docs/cc-plugin-repo-guideline.md).
+- 2026-11-04: phase 1 built on `feat/phase-1-core` (six skills, knowledge base, recipe format, `recipe_tool.py`); next is the phase 2 plan for Tandoor.
 
 ## Intent
 
