@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
 argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe file path]"
 ---
 
-@../\_shared/recipe-writing.md **Read when:** reworking any recipe: the risk table and rework workflow (sections 8.1 and 8.2), what may be copied and the attribution tiers (sections 8.3 and 8.4), unit definitions, density conversion and pitfalls (section 3), scaling (section 6), locale detection and conventions (section 7), and the method and ingredient-line rules (sections 2, 4 and 5)
+@../\_shared/recipe-writing.md **Read when:** reworking any recipe: the risk table and rework workflow (sections 8.1 and 8.2), what may be copied and the attribution tiers (sections 8.3 and 8.4), unit definitions, density conversion and pitfalls (section 3), scaling (section 6), locale detection and conventions (section 7), the method and ingredient-line rules (sections 2 and 4), and oven modes with °F to °C conversion (section 5)
 
 @../\_shared/culinary-craft.md **Read when:** reviewing the reworked recipe: the review checklist (section 5.1) and failure modes (section 5.2), and the identity core before adapting a traditional dish (section 4)
 
@@ -39,7 +39,7 @@ Keep the source text and its provenance (author, title, site or book, URL) apart
 
 Collect the hard constraints before reworking: `Allergies and hard exclusions`, the `Household` life stages and any registered guideline. A source ingredient that breaks one is substituted and flagged, or the user is told that no safe version exists. Never keep it for fidelity.
 
-Find out what the user wants changed when the request does not say: only restructure (default), change language or units, scale, substitute, or adapt to a guideline. Adapting to a guideline happens only on request. Keep the dish's identity core (`culinary-craft.md` section 4) or label the result a variation; never call a modified traditional dish "authentic".
+When the request does not say what to change, assume a restructure to the preferences (house style, language, units) and do not ask. Scale, substitute or adapt to a guideline only when the request asks or hints at it; adapting to a guideline happens only on request. Keep the dish's identity core (`culinary-craft.md` section 4) or label the result a variation; never call a modified traditional dish "authentic".
 
 ## Step 3: Detect the source locale
 
@@ -49,9 +49,9 @@ Before converting any unit, work out where the source comes from: its spelling, 
 
 Sort every change by the risk table in `recipe-writing.md` section 8.1.
 
-Free changes are made silently, as long as no warning, cue, temperature or reserved item is lost: wording in the house style, splitting and merging steps with their ingredients attached, grouping, headings, translation, units within one system. Warnings and doneness cues are never dropped, and a safety-critical step is never changed.
+Free changes are made silently, as long as no warning, cue, temperature or reserved portion (pasta water or a share of the sauce set aside for later) is lost: wording in the house style, splitting and merging steps with their ingredients attached, grouping, headings, translation, units within one system. Warnings and doneness cues are never dropped, and a safety-critical step is never changed.
 
-Recipe changes are each flagged: volume to weight with ingredient-specific densities, regional unit conversion, scaling (never linear for time, salt, leavening or reductions), a changed oven mode or pan, substitutions (say what changes, using `cooking-from-what-is-on-hand.md` section 6) and guideline adaptations. Take every number from a documented source in `recipe-writing.md`, round without drift, and label what you could not verify as not retested. A conversion that depends on how the ingredient is packed or cut (flour, brown sugar, chopped nuts) uses the form named in the source.
+Recipe changes are each flagged: volume to weight with ingredient-specific densities, regional unit conversion, °F to °C (give the conventional and the fan value, `recipe-writing.md` section 5.1), scaling (never linear for time, salt, leavening or reductions), a changed oven mode or pan, substitutions (say what changes, using `cooking-from-what-is-on-hand.md` section 6) and guideline adaptations. Take every number from a documented source in `recipe-writing.md`, round without drift, and label what you could not verify as not retested. A conversion that depends on how the ingredient is packed or cut (flour, brown sugar, chopped nuts) uses the form named in the source.
 
 Rewrite the method in neutral wording of your own. Drop the source headnote and personal story; do not paraphrase them closely. Never copy method prose, photos or distinctive wording.
 
@@ -67,7 +67,7 @@ After the recipe, show a short "Changes" list for the recipe changes only, one l
 
 ## Step 6: Attribution and notes
 
-Put the attribution in frontmatter `source`, worded in the output language, with `source-url` when known. Choose the tier from `recipe-writing.md` section 8.4: "adapted from" when the result closely follows the source, "inspired by" when the source only supplied an idea. German example: `Adaptiert nach <Titel>, <Autor>, <Quelle>`. Never strip the attribution and never present the result as original.
+Put the attribution in frontmatter `source`, worded in the output language, with `source-url` when known. Choose the tier from `recipe-writing.md` section 8.4: "adapted from" when the result closely follows the source, "inspired by" when the source only supplied an idea. German example: `Adaptiert nach <Titel>, <Autor>, <Quelle>`. Never strip the attribution and never present the result as original. A saved source file that already has `source` or `source-url` passes them on unchanged. When the author is unknown, say so; never invent one.
 
 The saved file's notes section holds the original amounts and units of every converted or substituted ingredient, the conversion convention used, and the testing status. Free changes need no note.
 
