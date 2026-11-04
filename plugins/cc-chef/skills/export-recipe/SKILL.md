@@ -16,7 +16,7 @@ This skill saves a recipe as a Markdown file and converts it to the configured t
 
 `$ARGUMENTS` holds zero or more paths to saved recipe files. With paths, the Markdown files already exist: skip Step 3 and validate them in Step 4. Without paths, the recipe in the conversation is the input.
 
-When another skill hands off (`create-recipe`, `rework-recipe`), it follows this skill from Step 1 with the recipe already in the conversation. Steps 1 and 2 always run; Step 3 writes the Markdown from the conversation's recipe.
+When another skill hands off (`create-recipe`, `rework-recipe`), it follows this skill from Step 1 with the recipe already in the conversation and skips this skill's framing line, which the handing-off skill already showed. Steps 1 and 2 always run; Step 3 writes the Markdown from the conversation's recipe.
 
 ## Step 1: Check the tools
 
@@ -46,7 +46,7 @@ It prints a collision-free path, for example `Rezepte/rinderrouladen.md`. Withou
 python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" validate "<recipe.md>"
 ```
 
-Run it once per file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. Exit 1 prints one `<file>:<line>: <message>` per problem. Fix those lines in the file with Edit and validate again, at most 3 rounds per file. If errors remain after the third round, keep the Markdown file saved and do not export it. For a batch, export the valid files and list the failing ones with their remaining `<file>:<line>` messages, plainly.
+Run it for each file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. Exit 1 prints one `<file>:<line>: <message>` per problem. Fix those lines in the file with Edit and validate again, at most 3 rounds per file. If errors remain after the third round, keep the Markdown file saved and do not export it. For a batch, export the valid files and list the failing ones with their remaining `<file>:<line>` messages, plainly.
 
 ## Step 5: Convert to the target
 
