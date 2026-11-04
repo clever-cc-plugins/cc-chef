@@ -23,7 +23,7 @@ Eggs poached in a spiced tomato and pepper sauce.
 - **2 cloves** garlic, sliced
 - **1 tsp** cumin, ground
 - **1 tbsp** harissa
-- **1 can (400 g)** crushed tomatoes
+- **1 can, 400 g** crushed tomatoes
 - Salt, a pinch at the start and the rest at the end
 
 Heat the oil over medium heat and cook the onion and pepper with a pinch of salt for about 8 minutes, until soft and lightly golden. Add garlic, cumin and harissa and stir for 1 minute until fragrant. Add the tomatoes and simmer 10 minutes until thick enough that a spoon leaves a trail.

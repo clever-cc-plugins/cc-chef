@@ -42,9 +42,9 @@ oven: 160 °C Ober-/Unterhitze, 140 °C Umluft
 
 ## Rules
 
-Frontmatter is a flat subset of YAML: `key: value` lines and inline lists such as `[a, b]`. Digits-only values are numbers, surrounding quotes are stripped, unknown keys are kept, and a missing `cc-chef` key is read as version 1. The title comes from the frontmatter `title`, falling back to the `# ` heading; one of the two must exist.
+Frontmatter is a flat subset of YAML: `key: value` lines, inline lists such as `[a, b]`, and block lists (`tags:` followed by `- a` lines). Any other non-blank line, such as one without a colon, is an error. Ascii digits-only values are numbers, surrounding quotes are stripped, unknown keys are kept, and a missing `cc-chef` key is read as version 1. The title comes from the frontmatter `title`, falling back to the `# ` heading; one of the two must exist.
 
-A step is a `###` heading that starts with `<n>. `, numbered 1, 2, 3 in order. Only the bullet block directly under a step heading holds ingredients (blank lines between bullets are fine). Bullets after instruction text are part of the text. A step may have no ingredients.
+A step is a `###` heading that starts with `<n>. `, numbered 1, 2, 3 in order. Only the bullet block directly under a step heading holds ingredients (blank lines between bullets are fine). Bullets after instruction text are part of the text. A step may have no ingredients. A step title is the component group (for example "Sauce" or "Filling"); there is no separate ingredient-section field, a deliberate deviation from the design spec. A `##` heading cannot sit between two steps: it is an error, so put such text in the notes after the last step.
 
 An ingredient line is: an optional bold amount and unit, then the food up to the first `, `, then an optional note. The first token inside the bold part is the amount: digits, a decimal comma or point, a unicode fraction such as `½`, a fraction `a/b`, or a range with `-` or `–`. The rest of the bold part is the unit and may be empty (`**2** Eier`). Bold text that does not start with an amount (`**eine Prise** Salz`) is kept as the unit with no amount. A line without bold has no amount, as in `- Salz`.
 
@@ -65,7 +65,7 @@ python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" validate <file>
 python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" newpath <folder> <title>
 ```
 
-`validate` prints `OK: <title>, <n> steps, <m> ingredients` and exits 0, or prints `<file>:<line>: <message>` and exits 1. It reports a missing or unclosed frontmatter, a missing title, no steps, an unclosed `**` in an ingredient line, and step numbers that do not run 1..n. Fix the reported line and validate again. `newpath` prints a collision-free `.md` path for a title in a folder. The `jsonld` and `paprika` subcommands arrive with the export skill.
+`validate` prints `OK: <title>, <n> steps, <m> ingredients` and exits 0, or prints `<file>:<line>: <message>` for the first problem it finds and exits 1. It reports a missing or unclosed frontmatter, a frontmatter line that is not `key: value`, a missing title, no steps, an unclosed `**` in an ingredient line, a `##` heading between steps, and step numbers that do not run 1..n. Fix the reported line and validate again. `newpath` prints a collision-free `.md` path for a title in a folder.
 
 ## Without python3
 
@@ -157,7 +157,7 @@ Eggs poached in a spiced tomato and pepper sauce.
 - **2 cloves** garlic, sliced
 - **1 tsp** cumin, ground
 - **1 tbsp** harissa
-- **1 can (400 g)** crushed tomatoes
+- **1 can, 400 g** crushed tomatoes
 - Salt, a pinch at the start and the rest at the end
 
 Heat the oil over medium heat and cook the onion and pepper with a pinch of salt for about 8 minutes, until soft and lightly golden. Add garlic, cumin and harissa and stir for 1 minute until fragrant. Add the tomatoes and simmer 10 minutes until thick enough that a spoon leaves a trail.

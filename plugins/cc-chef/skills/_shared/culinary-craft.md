@@ -108,7 +108,7 @@ Almost every tradition starts by cooking a few aromatics in fat. Gentle heat sof
 
 ### 3.1 Finishing toolkit
 
-Rule: exactly one finishing element, occasionally two, each adding what the dish lacks (brightness for a braise, crunch for a soft dish, richness for a lean one), taken from the same or a neighbouring tradition, and stated with when and where it goes ("scatter over each bowl just before serving").
+Rule: exactly one finishing element, adding what the dish lacks (brightness for a braise, crunch for a soft dish, richness for a lean one), taken from the same or a neighbouring tradition, and stated with when and where it goes ("scatter over each bowl just before serving").
 
 | Finish                    | Adds                                  | Classic fits                                                                                                 | Caution                                                                                          |
 | ------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
