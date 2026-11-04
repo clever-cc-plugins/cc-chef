@@ -43,7 +43,7 @@ Ask in this order, one question each, with the default in brackets:
 2. Equipment (default: standard hob and oven; ask whether the oven has a fan).
 3. Staple pantry: what is always at home (default: salt, pepper, oil, flour, sugar, common spices).
 4. Likes and dislikes (taste only; default: none).
-5. Optional, never pressed: allergies and hard exclusions to respect in every recipe: allergens with severity and cross-contact sensitivity, and absolute religious or ethical exclusions (default: none). Do not probe for health details; mention that `/cc-chef:dietary-guidelines` can record more detail.
+5. Optional, never pressed: allergies and hard exclusions to respect in every recipe: allergens with severity and cross-contact sensitivity, and absolute religious or ethical exclusions (default: none). Do not probe for health details, and do not name `/cc-chef:dietary-guidelines` here: Step 9 offers it once.
 6. Favourite cuisines, usual time on weekdays and cooking skill (default: no preference, 30-45 minutes, intermediate).
 
 ## Step 5: Recipe target and save folder
