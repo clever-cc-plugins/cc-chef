@@ -97,6 +97,8 @@ def _parse_frontmatter(lines: list[str]) -> tuple[dict[str, object], int]:
             continue
         if not line.strip():
             continue
+        if item or line[0].isspace():
+            raise RecipeFormatError(i + 1, "frontmatter is flat: no nested keys or stray list items")
         key, sep, value = line.partition(":")
         if not sep or not key.strip():
             raise RecipeFormatError(i + 1, "frontmatter line is not 'key: value'")
@@ -165,7 +167,8 @@ def parse_recipe(text: str) -> Recipe:
             if lines[i].startswith("## "):
                 raise RecipeFormatError(
                     i + 1,
-                    "a step section can't be interrupted by a '## ' heading; move it to the notes after the last step",
+                    "a '## ' heading sits between numbered steps: move it to the notes after the last step, "
+                    "and don't use '### <n>.' headings inside the notes",
                 )
     notes_idx = next(
         (i for i in range(last_step_idx + 1, len(lines)) if lines[i].startswith("## ")),
@@ -195,11 +198,7 @@ def parse_recipe(text: str) -> Recipe:
             end = step_heads[k + 1][0]
         if notes_idx is not None and k == len(step_heads) - 1:
             end = notes_idx
-        body: list[tuple[int, str]] = []
-        for j in range(idx + 1, end):
-            if lines[j].startswith("## "):
-                break
-            body.append((j + 1, lines[j]))
+        body = [(j + 1, lines[j]) for j in range(idx + 1, end)]
         ingredients, step_text = _parse_step_body(body)
         steps.append(Step(number, step_title, ingredients, step_text))
 
@@ -313,7 +312,7 @@ def to_paprika(r: Recipe) -> dict:
         "prep_time": mins(_minutes(r, "prep-minutes")),
         "cook_time": mins(_minutes(r, "cook-minutes")),
         "total_time": mins(_total_minutes(r)),
-        "notes": re.sub(r"^#+\s*", "", r.notes, flags=re.MULTILINE),
+        "notes": re.sub(r"^#+\s+", "", r.notes, flags=re.MULTILINE),
         "description": r.description,
         "source": str(r.meta.get("source", "")),
         "source_url": str(r.meta.get("source-url", "")),

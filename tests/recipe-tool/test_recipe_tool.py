@@ -131,6 +131,22 @@ class StrictnessTests(unittest.TestCase):
             rt.parse_recipe("---\ntitle: X\nservings: 2\n- a\n---\n\n### 1. A\n\nx\n")
         self.assertEqual(c.exception.line, 4)
 
+    def test_list_item_with_colon_outside_a_block_list(self):
+        with self.assertRaises(rt.RecipeFormatError) as c:
+            rt.parse_recipe("---\ntitle: X\nservings: 2\n- a: b\n---\n\n### 1. A\n\nx\n")
+        self.assertEqual(c.exception.line, 4)
+
+    def test_nested_frontmatter_key(self):
+        with self.assertRaises(rt.RecipeFormatError) as c:
+            rt.parse_recipe("---\ntitle: X\nsource:\n  name: y\n---\n\n### 1. A\n\nx\n")
+        self.assertEqual(c.exception.line, 4)
+
+    def test_numbered_heading_in_notes_gets_a_helpful_error(self):
+        with self.assertRaises(rt.RecipeFormatError) as c:
+            rt.parse_recipe("---\ntitle: X\n---\n\n### 1. A\n\nx\n\n## Hinweise\n\n### 2. Variante\n\ny\n")
+        self.assertEqual(c.exception.line, 9)
+        self.assertIn("### <n>.", c.exception.message)
+
     def test_heading_between_steps(self):
         with self.assertRaises(rt.RecipeFormatError) as c:
             rt.parse_recipe("---\ntitle: X\n---\n\n### 1. A\n\nx\n\n## Soße\n\n### 2. B\n\ny\n")

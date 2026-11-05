@@ -65,6 +65,10 @@ class ExportTests(unittest.TestCase):
         self.assertTrue(r.notes.startswith("## Hinweise"))
         self.assertEqual(rt.to_paprika(r)["notes"], "Hinweise\n\n- a\n\nKleinteil\n\nb")
 
+    def test_paprika_notes_keep_hash_in_plain_text(self):
+        r = rt.parse_recipe("---\ntitle: T\n---\n\n### 1. A\n\nx\n\n## Hinweise\n\n#1 Tipp\n#hashtag\n")
+        self.assertEqual(rt.to_paprika(r)["notes"], "Hinweise\n\n#1 Tipp\n#hashtag")
+
     def test_paprika_times_and_hash(self):
         p = rt.to_paprika(make("prep-minutes: 5\ncook-minutes: 120\n"))
         self.assertEqual((p["prep_time"], p["cook_time"], p["total_time"]), ("5 min", "120 min", "125 min"))
