@@ -25,6 +25,12 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `plugins/cc-chef/skills/rework-recipe/SKILL.md`      | Restructures an existing recipe to the user's preferences                                      |
 | `scripts/sync-config-table.sh`                       | Keeps Key Config Files table in sync on each commit                                            |
 
+<!-- cc-config: last-optimize-run: 2026-11-05 a3bfe1c6ee6f5e035454806ca1b107c537aea9d8 -->
+
+## Commands
+
+- Test the recipe tool: `python3 -m unittest discover -s tests/recipe-tool -v`
+
 ## Don't
 
 - Don't commit secrets or credentials to git
@@ -34,3 +40,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 ## Learnings
 
 When the user corrects a mistake or points out a recurring issue, append a one-line summary to `.claude/learnings.md`. Don't modify `CLAUDE.md` directly.
+
+## Compact Instructions
+
+When compacting, preserve: the list of modified files, test status, and open TODOs.
