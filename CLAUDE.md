@@ -8,14 +8,13 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `.claude/format-markdown.sh`                         | PostToolUse hook: formats Markdown files with prettier after edits                             |
 | `.claude/guard-secret-files.sh`                      | PreToolUse hook: blocks reads/edits/writes of secret .env files                                |
-| `.claudeignore`                                      | Paths excluded from Claude Code indexing                                                       |
-| `CLAUDE.md`                                          | Project instructions, loaded every message                                                     |
 | `.claude/settings.json`                              | Permissions, hooks, environment variables                                                      |
 | `.githooks/pre-commit`                               | Secret scanning (gitleaks) + CLAUDE.md table sync                                              |
 | `.github/workflows/claude-code-review.yml`           | Auto-runs Claude Code review on PRs from trusted authors (owner/member/collaborator)           |
 | `.github/workflows/claude.yml`                       | Runs Claude Code on `@claude` mentions in issues/PR comments/reviews, gated to trusted authors |
 | `.github/workflows/release.yml`                      | Triggers the shared `clever-cc-plugins/.github` release workflow on push to `main`             |
 | `.gitignore`                                         | Git ignore patterns                                                                            |
+| `CLAUDE.md`                                          | Project instructions, loaded every message                                                     |
 | `plugins/cc-chef/.claude-plugin/plugin.json`         | Plugin manifest                                                                                |
 | `plugins/cc-chef/skills/chef-onboarding/SKILL.md`    | Sets up cooking preferences, save folder and one-time disclaimer                               |
 | `plugins/cc-chef/skills/create-recipe/SKILL.md`      | Turns a mood, ingredients, photo or dish name into a cookable recipe                           |
@@ -24,6 +23,8 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `plugins/cc-chef/skills/research-prompt/SKILL.md`    | Builds a deep-research prompt for a diet or food constraint                                    |
 | `plugins/cc-chef/skills/rework-recipe/SKILL.md`      | Restructures an existing recipe to the user's preferences                                      |
 | `scripts/sync-config-table.sh`                       | Keeps Key Config Files table in sync on each commit                                            |
+
+<!-- cc-config: last-optimize-run: 2026-11-05 b39142efc5537fdca51e7e6bae4158d75d84f85a -->
 
 ## Don't
 
