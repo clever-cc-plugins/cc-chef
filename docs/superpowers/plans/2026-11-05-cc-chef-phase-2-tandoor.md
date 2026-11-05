@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Work on branch `feat/phase-2-tandoor`. Never push. Commit this plan file in Task 1.
+- Work on branch `feat/phase-2-tandoor`. Never push.
 - Commits: Conventional Commits with gitmoji, ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Run `git status --short` before each commit. Never edit the version in `plugin.json`.
 - Python ≥ 3.9, standard library only, `from __future__ import annotations` as in `recipe_tool.py`. Scripts live in `plugins/cc-chef/skills/_shared/scripts/` and are called as `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py" ...`.
 - Instance URL and token come only from `TANDOOR_URL` and `TANDOOR_TOKEN`. The token is never written to a file, printed, or put in an error message (§3). No `curl`, no `wget`, no `.env` file.
@@ -94,7 +94,7 @@ def test_check_warns_on_http(self):   # http:// to a non-localhost name → warn
 - [ ] **Step 2:** Run `python3 -m unittest discover -s tests/tandoor -v`. Expected: FAIL (`tandoor_client` not found).
 - [ ] **Step 3:** Implement the client. Disable redirects with an `HTTPRedirectHandler` subclass whose `redirect_request` returns `None`, because `urllib` otherwise copies `Authorization` to the new host. Run every error message through `str.replace(token, "***")`. Implement `tandoor.py check`: read `api/server-settings/current/` for the version, then `api/food/?page_size=1` to prove the token; print `OK: <url>, Tandoor <version>`; warn on stderr for plain `http://` unless the host is `localhost` or `127.0.0.1`, and for a major version below 2.
 - [ ] **Step 4:** Run the same command. Expected: all PASS. Also run `python3 -m unittest discover -s tests/recipe-tool`: 42 tests OK.
-- [ ] **Step 5: Commit** (including this plan file) — `feat: ✨ add Tandoor client and connection check`.
+- [ ] **Step 5: Commit** — `feat: ✨ add Tandoor client and connection check`.
 
 ### Task 2: Mapping the recipe model to Tandoor
 
