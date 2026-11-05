@@ -1,0 +1,17 @@
+# Owner reference inputs (personal data; local only, never commit)
+docs/owner-inputs/
+
+.claude/settings.local.json
+.claude/local.md
+
+# Headroom — machine-local session cache and learnings
+.headroom/
+
+# MCP tool-local caches
+.codegraph/
+.serena/
+.tokensave/
+
+# Python bytecode
+__pycache__/
+*.pyc

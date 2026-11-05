@@ -2,12 +2,12 @@
 
 Captured during brainstorming on 2026-11-01. This is not a design. The plugin design starts once the research in `docs/research/` is in (see `docs/research-prompts/README.md`).
 
-## Status (2026-11-01)
+## Status (2026-11-02)
 
-- Done: brainstorming on intent and scope; five research prompts in `docs/research-prompts/`.
-- In progress: the owner is running the research prompts. Results go to `docs/research/research-results-<prompt-file-name>-by-<tool>.md`.
-- Next: once the research is in, continue the brainstorming (superpowers:brainstorming) to design the plugin — skill set, onboarding, context files, export — and write the design doc to `docs/superpowers/specs/`. Then set up the repo structure per the [cc-plugin-repo-guideline](https://github.com/clever-cc-plugins/marketplace/blob/main/docs/cc-plugin-repo-guideline.md).
-- Agreed order: research first, then design. No plugin scaffolding before the design is approved.
+- Done: brainstorming on intent and scope; five research prompts in `docs/research-prompts/`; research results in `docs/research/`.
+- Done: plugin design, approved by the owner on 2026-11-02: [docs/superpowers/specs/2026-11-02-cc-chef-design.md](superpowers/specs/2026-11-02-cc-chef-design.md). It supersedes this note wherever they differ.
+- Next: implementation plan (superpowers:writing-plans), then build per the [cc-plugin-repo-guideline](https://github.com/clever-cc-plugins/marketplace/blob/main/docs/cc-plugin-repo-guideline.md).
+- 2026-11-04: phase 1 built on `feat/phase-1-core` (six skills, knowledge base, recipe format, `recipe_tool.py`); next is the phase 2 plan for Tandoor.
 
 ## Intent
 
