@@ -316,7 +316,7 @@ Recipes touch on health. Describe what is in the dish and what changed; do not p
 
 ### 7.3 The one-time disclaimer (what it must say)
 
-Shown once during onboarding, plain language, in the user's language. It must say:
+Shown once per run of `chef-onboarding` or `dietary-guidelines`, plain language, in the user's language. It must say:
 
 1. The tool offers general information to support healthy everyday cooking; it is not medical advice and does not diagnose, treat, cure or prevent disease.
 2. It does not replace a doctor, registered dietitian or pharmacist, especially for medical conditions, medicines, pregnancy, infants and prescribed diets; clinician instructions come first.
