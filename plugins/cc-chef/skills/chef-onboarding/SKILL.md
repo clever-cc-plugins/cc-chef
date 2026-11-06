@@ -8,6 +8,8 @@ argument-hint: "[optional: path to an existing food list or preferences file to 
 
 @../\_shared/nutrition-and-guidelines.md **Read when:** writing the one-time disclaimer (section 7.3) and asking about household members' life stages (section 3)
 
+@../\_shared/tandoor-api.md **Read when:** the user wants Tandoor as the recipe target, or the connection check fails
+
 # Chef Onboarding
 
 This skill sets up a cooking preferences file and registers it, and any food list the user already has, in the `## Context files` table of `CLAUDE.md`. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only onboarding-specific behaviour. Step 4 of the contract (output, save or export) does not apply: this skill writes context, not a recipe.
@@ -48,7 +50,7 @@ Ask in this order, one question each, with the default in brackets:
 
 ## Step 5: Recipe target and save folder
 
-1. Recipe target: `files` (Markdown recipe files only), `json-ld` (schema.org JSON-LD for apps that import it) or `paprika` (Paprika archive). Default `files`. If the user asks for Tandoor, say it is planned for a later version and offer `json-ld` or `paprika` for now.
+1. Recipe target: `files` (Markdown recipe files only), `json-ld` (schema.org JSON-LD for apps that import it) or `paprika` (Paprika archive). Default `files`. Offer `tandoor` only after asking whether the user runs a Tandoor instance. If they do, point to the setup in `../_shared/tandoor-api.md` section 1 (token with `read` and `write` scope, `TANDOOR_URL` and `TANDOOR_TOKEN` set in the shell that starts Claude Code) and run `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py" check`. On success, store `tandoor`. On failure, say why in one line, store `files`, and tell them they can re-run this skill once the setup works. Never ask for the token in the chat. If the user pastes one anyway, do not repeat it, do not store it anywhere, and tell them to create a new token and revoke the pasted one.
 2. Save folder: the user's choice. If Step 1 found an existing recipe folder, propose it. Otherwise propose a name in the output language ("Rezepte/" for German, "recipes/" for English, and so on) and let the user pick any other path. Never use a name the user did not confirm.
 
 ## Step 6: Register an existing food list (optional)

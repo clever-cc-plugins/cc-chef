@@ -48,6 +48,8 @@ A step is a `###` heading that starts with `<n>. `, numbered 1, 2, 3 in order. O
 
 An ingredient line is: an optional bold amount and unit, then the food up to the first `, `, then an optional note. The first token inside the bold part is the amount: digits, a decimal comma or point, a unicode fraction such as `½`, a fraction `a/b`, or a range with `-` or `–`. The rest of the bold part is the unit and may be empty (`**2** Eier`). Bold text that does not start with an amount (`**eine Prise** Salz`) is kept as the unit with no amount. A line without bold has no amount, as in `- Salz`.
 
+Two optional frontmatter keys tie a file to a Tandoor recipe: `tandoor-id` (the recipe's number) and `tandoor-updated-at` (its last-change timestamp when it was pulled). Only `rework-recipe` writes them, copying the two lines that `tandoor.py pull` prints; `tandoor.py match` reads them to update that recipe in place instead of creating a new one, and refuses the update if the recipe changed in Tandoor since the pull.
+
 The description is the text between the `#` heading and the first `##` or `###` heading. The notes are everything from the first `##` heading after the last step to the end of the file. `##` headings before the first step are free text in the user's language and are never parsed for meaning.
 
 "Optional" goes in the ingredient note in the user's language; there is no separate flag. Original amounts of converted or substituted ingredients, and the conversion convention used, go into the notes section, not into extra fields. The ingredient overview is derived from the steps and never stored.
