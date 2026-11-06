@@ -10,7 +10,6 @@ import hashlib
 import json
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit
 
 import recipe_tool as rt
 import tandoor_cleanup as tcl
@@ -25,9 +24,6 @@ ALIAS_TYPES = {"food": "FOOD_ALIAS", "unit": "UNIT_ALIAS", "keyword": "KEYWORD_A
 
 def _cmd_check(args: argparse.Namespace) -> int:
     cfg = tc.load_config()
-    host = urlsplit(cfg.url)
-    if host.scheme == "http" and host.hostname not in ("localhost", "127.0.0.1"):
-        print("Warning: TANDOOR_URL uses plain http://, so the token travels unencrypted", file=sys.stderr)
     client = tc.Client(cfg)
     version = str(client.get("api/server-settings/current/").get("version", "?"))
     client.get("api/food/", {"page_size": 1})  # proves the token

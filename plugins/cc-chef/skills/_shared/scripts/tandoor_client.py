@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -46,6 +47,9 @@ class Client:
     def __init__(self, config: Config, timeout: int = 30):
         self.config = config
         self.timeout = timeout
+        host = urllib.parse.urlsplit(config.url)
+        if host.scheme == "http" and host.hostname not in ("localhost", "127.0.0.1"):
+            print("Warning: TANDOOR_URL uses plain http://, so the token travels unencrypted", file=sys.stderr)
         self._opener = urllib.request.build_opener(_NoRedirect)
 
     def _scrub(self, text: str) -> str:

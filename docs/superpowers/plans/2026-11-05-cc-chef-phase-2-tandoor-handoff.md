@@ -4,7 +4,7 @@ Status on 2026-11-06: Tasks 1–11 of `2026-11-05-cc-chef-phase-2-tandoor.md` ar
 
 ## State
 
-- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (93 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests). Python 3.9 is unverified.
+- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (94 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests). Python 3.9 is unverified.
 - `python3 tests/tandoor/live_smoke.py --run` ran against a fresh, empty test instance: 35 results, 0 FAIL, and it removes everything it creates. It is opt-in and needs `TANDOOR_URL` and `TANDOOR_TOKEN` (write scope).
 - One real food merge went through the `tandoor-food-cleanup` flow: the notes moved, the recipe stayed intact, the alias exists, the kept food was unchanged, and the source's properties were deleted with it.
 - `tandoor-api.md` section 4 has a status column per fact: `verified against 2.7.2, 2026-11-06`, corrected by the live check, or still `from source, 2026-11-05`.

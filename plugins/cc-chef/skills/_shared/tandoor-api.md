@@ -40,6 +40,7 @@ The plan is a JSON file the script writes and reads; skills never edit it by han
 | No silent duplicate foods            | A food, unit or keyword is sent as `{id, name}` of a database entry, never as free text; only exact name or plural matches and aliases count as confident, fuzzy hits are suggestions; a new keyword is still created without a question, and the preview lists what it resembles |
 | No silent rename                     | Tandoor updates a nested entry that carries an `id` from the payload, so upload first checks every reused entry against the live name and stops if it changed                         |
 | The token never leaves the instance  | Redirects are not followed, every message is scrubbed of the token, and a plan made for one instance is refused for another                                                           |
+| Update mode creates new entries first | Foods, units and keywords the plan marks as new are created before the recipe is patched. If the patch fails they stay; `upload` lists them, and a new `match` finds them as exact |
 | Updates cannot overwrite newer edits | The plan stores `updated_at`; update mode refuses when the recipe changed since the pull or since the plan                                                                            |
 
 ## 4. API facts the script relies on

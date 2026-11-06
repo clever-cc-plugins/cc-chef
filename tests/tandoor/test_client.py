@@ -129,6 +129,11 @@ class ClientTests(unittest.TestCase):
         r = cli(None, "check", token=None)
         self.assertEqual(r.returncode, 3)
 
+    def test_every_command_warns_on_http_not_only_check(self):
+        r = cli("http://tandoor.invalid", "recipes")
+        self.assertIn("plain http://", r.stderr)
+        self.assertNotIn("plain http://", cli(self.url, "recipes").stderr)
+
     def test_check_warns_on_http(self):
         r = cli("http://tandoor.invalid", "check")
         self.assertIn("http://", r.stderr)
