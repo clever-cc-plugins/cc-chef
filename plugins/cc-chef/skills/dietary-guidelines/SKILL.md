@@ -1,7 +1,12 @@
 ---
 name: dietary-guidelines
 description: >
-  Use this skill when the user wants a personal dietary guideline that the other cc-chef skills apply: allergens, hard constraints, safety rules for a child or pregnancy, and everyday nutrition targets for each household member. Opt-in only. Invoke when the user says "make me a dietary guideline", "write dietary guidelines for my family", "record my allergies and nutrition targets", "turn this research into a guideline", "Ernährungsrichtlinie für meine Familie erstellen", or "update my dietary guideline". Accepts research results (a file path or pasted text, for example from /cc-chef:research-prompt) as input. Do NOT use it for general cooking preferences such as language, units, equipment or tastes (use chef-onboarding), or to get a research prompt (use research-prompt).
+  Write an opt-in personal dietary guideline per household member: allergens,
+  hard constraints, safety rules and nutrition targets that the other cc-chef
+  skills apply. Invoke when the user says "make me a dietary guideline", "turn
+  this research into a guideline" or "Ernährungsrichtlinie für meine Familie
+  erstellen". Do NOT use it for general cooking preferences (chef-onboarding)
+  or a research prompt (research-prompt).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 argument-hint: "[optional: path to research results or an existing guideline to convert or update]"
 ---

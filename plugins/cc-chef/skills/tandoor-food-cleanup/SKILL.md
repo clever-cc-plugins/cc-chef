@@ -1,7 +1,11 @@
 ---
 name: tandoor-food-cleanup
 description: >
-  Use this skill to clean up the food and unit database of the user's Tandoor instance: find duplicate foods and units, find foods whose names hold quantities or preparation details, and merge them group by group after the user approves each group. Invoke when the user says "clean up my Tandoor foods", "merge duplicate foods in Tandoor", "my Tandoor food list is a mess", "Tandoor Zutaten aufräumen", or "fix the units in Tandoor". Needs a configured Tandoor instance (TANDOOR_URL and TANDOOR_TOKEN). Changes nothing before the user approves a group, and merges cannot be undone. Do NOT use it to upload a recipe (use export-recipe) or to restructure a recipe (use rework-recipe).
+  Clean up the food and unit database of the user's Tandoor instance by
+  merging duplicates group by group after approval. Invoke when the user says
+  "clean up my Tandoor foods" or "Tandoor Zutaten aufräumen". Needs TANDOOR_URL and
+  TANDOOR_TOKEN; merges cannot be undone. Do NOT use it to upload (export-recipe)
+  or restructure a recipe (rework-recipe).
 allowed-tools: Read, Write, Bash, Glob
 argument-hint: "[optional: food or unit to start with]"
 ---

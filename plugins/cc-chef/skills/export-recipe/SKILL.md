@@ -1,7 +1,11 @@
 ---
 name: export-recipe
 description: >
-  Use this skill to save a recipe as a Markdown file and, if wanted, convert it to JSON-LD or a Paprika archive or upload it to Tandoor. Invoke when the user says "save this recipe", "export this recipe", "export as JSON-LD", "make a Paprika file", "convert my recipes for import", "put this in my recipe folder", or "upload this to Tandoor". Takes a recipe from the conversation or one or more existing recipe files (paths). Other cc-chef skills hand their finished recipe to this one. Do NOT use it to make a new recipe (use create-recipe).
+  Save a recipe as Markdown and, if wanted, convert it to JSON-LD or Paprika, or
+  upload it to Tandoor. Invoke when the user says "save this recipe", "export as
+  JSON-LD", "make a Paprika file" or "upload this to Tandoor". Takes a recipe from
+  the conversation or saved files. Do NOT use it to make a new recipe
+  (create-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob
 argument-hint: "[optional: path(s) to saved recipe .md files to export]"
 ---
