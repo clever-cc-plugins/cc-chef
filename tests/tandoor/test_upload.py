@@ -124,6 +124,22 @@ class UploadTests(FakeCase):
         self.assertEqual(len(self.fake.db["food"]), len(SEED["food"]) + 1)
         self.assertEqual(len(self.fake.db["unit"]), len(SEED["unit"]))
 
+    def test_upload_refused_when_entry_changed_since_match(self):
+        self.match()
+        self.resolve_all()
+        digest = self.digest()
+        self.fake.db["food"][0]["name"] = "Speisezwiebel"  # id 7 renamed in Tandoor after the plan was made
+        r = self.run_cli("upload", self.plan_path, "--confirm", digest)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("match again", r.stderr)
+        self.assertEqual(self.writes(), [])
+        self.assertEqual(self.fake.db["food"][0]["name"], "Speisezwiebel")
+        self.fake.db["food"][0]["name"] = "Zwiebel"
+        del self.fake.db["food"][2]  # id 9 (Mehl) deleted
+        r = self.run_cli("upload", self.plan_path, "--confirm", digest)
+        self.assertEqual(r.returncode, 1)
+        self.assertEqual(self.writes(), [])
+
     def test_upload_read_back(self):
         self.match()
         self.resolve_all()

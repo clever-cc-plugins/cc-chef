@@ -217,6 +217,23 @@ def _cmd_preview(args: argparse.Namespace) -> int:
     return 0
 
 
+def _verify_entries(client: tc.Client, plan: dict) -> str | None:
+    """A nested food/unit/keyword with an id is updated from the payload, so a stale name would rename it."""
+    for kind in KINDS:
+        for _, e in _entries(plan, kind):
+            if e["decision"] != "use":
+                continue
+            try:
+                live = client.get(f"api/{kind}/{e['id']}/")
+            except tc.TandoorError as err:
+                if err.status != 404:
+                    raise
+                return f"{kind} '{e['name']}' (id {e['id']}) no longer exists: run match again"
+            if live["name"] != e["name"]:
+                return f"{kind} id {e['id']} is now called '{live['name']}', the plan says '{e['name']}': run match again"
+    return None
+
+
 def _cmd_upload(args: argparse.Namespace) -> int:
     plan = _load_plan(args.plan)
     cfg = tc.load_config()
@@ -239,6 +256,10 @@ def _cmd_upload(args: argparse.Namespace) -> int:
         return 1
     created: dict[str, dict] = {k: {} for k in KINDS}
     try:
+        stale = _verify_entries(client, plan)
+        if stale:
+            print(stale, file=sys.stderr)
+            return 1
         for kind in KINDS:
             for key, e in _entries(plan, kind):
                 if e["decision"] == "create":
