@@ -13,6 +13,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `.github/workflows/claude-code-review.yml`             | Auto-runs Claude Code review on PRs from trusted authors (owner/member/collaborator)           |
 | `.github/workflows/claude.yml`                         | Runs Claude Code on `@claude` mentions in issues/PR comments/reviews, gated to trusted authors |
 | `.github/workflows/release.yml`                        | Triggers the shared `clever-cc-plugins/.github` release workflow on push to `main`             |
+| `.github/workflows/tests.yml`                          | TODO: add description                                                                          |
 | `.gitignore`                                           | Git ignore patterns                                                                            |
 | `CLAUDE.md`                                            | Project instructions, loaded every message                                                     |
 | `plugins/cc-chef/.claude-plugin/plugin.json`           | Plugin manifest                                                                                |

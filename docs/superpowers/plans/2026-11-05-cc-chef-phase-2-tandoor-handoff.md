@@ -4,7 +4,7 @@ Status on 2026-11-06: Tasks 1–11 of `2026-11-05-cc-chef-phase-2-tandoor.md` ar
 
 ## State
 
-- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (94 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests). Python 3.9 is unverified.
+- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (94 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests), on Python 3.9 and 3.12; `.github/workflows/tests.yml` runs both on every PR and on pushes to `main`.
 - `python3 tests/tandoor/live_smoke.py --run` ran against a fresh, empty test instance: 35 results, 0 FAIL, and it removes everything it creates. It is opt-in and needs `TANDOOR_URL` and `TANDOOR_TOKEN` (write scope).
 - One real food merge went through the `tandoor-food-cleanup` flow: the notes moved, the recipe stayed intact, the alias exists, the kept food was unchanged, and the source's properties were deleted with it.
 - `tandoor-api.md` section 4 has a status column per fact: `verified against 2.7.2, 2026-11-06`, corrected by the live check, or still `from source, 2026-11-05`.
@@ -37,7 +37,6 @@ Decided later or left open:
 - Whether the ingredient list leaves out other users' private recipes: needs a second user. The script treats a gap between `numrecipe` and the recipes reached as hidden recipes.
 - Alias matching on a real import. The merge creates the alias live; resolving it in `match` is only covered by `test_alias_from_a_merge_resolves_in_the_next_match` against the fake.
 - A wrong `name` in a nested `food` with `id` renames the food (from source, not tried).
-- Python 3.9.
 
 ## Rulings made during implementation
 
