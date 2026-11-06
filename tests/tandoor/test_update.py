@@ -57,6 +57,14 @@ class UpdateTests(FakeCase):
         self.assertIn("tandoor-id: 60", r.stdout)
         self.assertIn(f"tandoor-updated-at: {PULLED_AT}", r.stdout)
 
+    def test_pull_never_overwrites_an_earlier_backup(self):
+        backup = self.tmp / "backup.json"
+        backup.write_text("state before the rework", encoding="utf-8")
+        r = self.run_cli("pull", 60, "-o", backup)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("already exists", r.stderr)
+        self.assertEqual(backup.read_text(encoding="utf-8"), "state before the rework")
+
     def test_pull_unknown_id(self):
         r = self.run_cli("pull", 999, "-o", self.tmp / "b.json")
         self.assertEqual(r.returncode, 1)

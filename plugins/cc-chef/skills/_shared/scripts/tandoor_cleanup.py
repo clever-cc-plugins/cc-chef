@@ -47,12 +47,16 @@ def _keys(entry: dict, kind: str, unit_names: set[str]) -> set[str]:
     return keys
 
 
-def _group(kind: str, key: str, members: list[dict], confidence: str) -> dict:
+def _group(kind: str, key: str, members: list[dict], confidence: str, enrich=None) -> dict:
+    if enrich:
+        enrich(members)
     return {"key": key, "kind": kind, "members": members, "keep": suggest_keep(members), "confidence": confidence}
 
 
-def duplicate_groups(entries: list[dict], unit_names: set[str], kind: str = "food") -> list[dict]:
-    """`same`: equal core name or plural. `maybe`: near-identical names, offering the best entry of each cluster."""
+def duplicate_groups(entries: list[dict], unit_names: set[str], kind: str = "food", enrich=None) -> list[dict]:
+    """`same`: equal core name or plural. `maybe`: near-identical names, offering the best entry of each cluster.
+
+    `enrich(members)` runs before an entry is picked, to add data the lists lack (`numrecipe`)."""
     parent = list(range(len(entries)))
 
     def find(i: int) -> int:
@@ -73,7 +77,7 @@ def duplicate_groups(entries: list[dict], unit_names: set[str], kind: str = "foo
     cluster_keys = [set().union(*(keys[i] for i in c)) for c in cluster_list]
 
     groups = [
-        _group(kind, min(cluster_keys[n]), [entries[i] for i in c], "same")
+        _group(kind, min(cluster_keys[n]), [entries[i] for i in c], "same", enrich)
         for n, c in enumerate(cluster_list)
         if len(c) > 1
     ]
@@ -107,9 +111,11 @@ def duplicate_groups(entries: list[dict], unit_names: set[str], kind: str = "foo
             best = []
             for n in comp:
                 members = [entries[i] for i in cluster_list[n]]
+                if enrich:
+                    enrich(members)
                 keep = suggest_keep(members)
                 best.append(next(m for m in members if m["id"] == keep))
-            groups.append(_group(kind, min(min(cluster_keys[n]) for n in comp), best, "maybe"))
+            groups.append(_group(kind, min(min(cluster_keys[n]) for n in comp), best, "maybe", enrich))
     return groups
 
 

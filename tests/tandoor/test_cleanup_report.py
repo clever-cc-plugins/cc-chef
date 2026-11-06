@@ -85,6 +85,14 @@ class ReportTests(FakeCase):
         self.assertEqual(groups[0]["confidence"], "maybe")
         self.assertIn("keep", groups[1])
 
+    def test_maybe_group_offers_the_most_used_entry_of_a_cluster(self):
+        # "Basilikum" is the shortest name, "Basilikum, Topf" has the recipes; the list carries no counts to tell them apart
+        self.fake.db["food"] += [food(11, "Basilikum", n=0), food(12, "Basilikum, Topf", n=40), food(13, "Basilikumm", n=0)]
+        self.run_cli("foods-report", "-o", self.report)
+        groups = json.loads(self.report.read_text(encoding="utf-8"))["groups"]
+        maybe = next(g for g in groups if g["confidence"] == "maybe" and {m["id"] for m in g["members"]} & {11, 12, 13})
+        self.assertEqual({m["id"] for m in maybe["members"]}, {12, 13})
+
     def test_report_counts_recipes_per_member_because_lists_omit_them(self):
         self.fake.db["food"] += [food(6, "Salz", n=1), food(7, "salz", n=8)]
         self.run_cli("foods-report", "-o", self.report)

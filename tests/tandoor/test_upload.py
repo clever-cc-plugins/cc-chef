@@ -102,6 +102,18 @@ class UploadTests(FakeCase):
         self.assertEqual(r.returncode, 1)
         self.assertEqual(other.requests, [])
 
+    def test_failed_read_back_still_names_the_saved_recipe(self):
+        self.match()
+        self.resolve_all()
+        digest = self.digest()
+        new_id = max([r["id"] for r in self.fake.db["recipe"]], default=0) + 1
+        self.fake.can("GET", f"/api/recipe/{new_id}/", 500, {"detail": "boom"})
+        r = self.run_cli("upload", self.plan_path, "--confirm", digest)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn(f"Created: {new_id} ", r.stdout)
+        self.assertIn("do not upload this plan again", r.stderr)
+        self.assertEqual(len(self.fake.db["recipe"]), 1)
+
     def test_upload_sends_only_ids(self):
         self.match()
         self.resolve_all()

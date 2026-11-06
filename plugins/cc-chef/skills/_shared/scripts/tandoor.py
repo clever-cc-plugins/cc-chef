@@ -159,7 +159,11 @@ def _cmd_pull(args: argparse.Namespace) -> int:
             e = tc.TandoorError(f"there is no recipe with id {args.id} on this instance", 404)
         raise e from None
     try:
-        Path(args.output).write_text(json.dumps(recipe, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        with open(args.output, "x", encoding="utf-8") as f:  # never replace an earlier backup: it may be the state from before a change
+            f.write(json.dumps(recipe, indent=2, ensure_ascii=False) + "\n")
+    except FileExistsError:
+        print(f"{args.output} already exists and may hold an earlier state of the recipe: choose another file name", file=sys.stderr)
+        return 1
     except OSError as e:
         print(f"{args.output}: {e.strerror or e}", file=sys.stderr)
         return 1
@@ -181,14 +185,16 @@ def _cmd_foods_report(args: argparse.Namespace) -> int:
     unit_names = {u["name"] for u in units} | {u["plural_name"] for u in units if u.get("plural_name")}
     groups: list[dict] = []
     for kind, entries in (("food", foods), ("unit", units)):
-        found = tcl.duplicate_groups(entries, unit_names, kind)
-        counts: dict[int, int] = {}  # lists never carry `numrecipe`: ask for the members of groups only
-        for g in found:
-            for m in g["members"]:
+        counts: dict[int, int] = {}
+
+        def count_recipes(members: list[dict], counts=counts, kind=kind) -> None:
+            # lists never carry `numrecipe`: ask for the entries that can end up in a group, once each
+            for m in members:
                 if m["id"] not in counts:
                     counts[m["id"]] = (_live_entry(client, kind, m["id"]) or {}).get("numrecipe") or 0
                 m["numrecipe"] = counts[m["id"]]
-            g["keep"] = tcl.suggest_keep(g["members"])
+
+        found = tcl.duplicate_groups(entries, unit_names, kind, count_recipes)
         found.sort(key=lambda g: (-sum(m["numrecipe"] for m in g["members"]), g["key"]))
         groups += [{"id": f"{kind[0]}{n}", **g} for n, g in enumerate(found, 1)]
     polluted = []
@@ -237,6 +243,10 @@ def _cmd_group_plan(args: argparse.Namespace) -> int:
         print("--detail takes <id>=<text>, --merge takes comma-separated ids", file=sys.stderr)
         return 1
     kind = args.kind
+    unknown = [i for i in [args.keep, *merge] if i not in {e["id"] for e in report[kind + "s"]}]
+    if unknown:
+        print(f"not in the report as a {kind}: {', '.join(map(str, unknown))}; check the ids against the report", file=sys.stderr)
+        return 1
     keep = _live_entry(client, kind, args.keep)
     if keep is None:
         print(f"the entry to keep (id {args.keep}) no longer exists", file=sys.stderr)
@@ -458,7 +468,6 @@ def _cmd_upload(args: argparse.Namespace) -> int:
             recipe["id"] = plan["tandoor_id"]
         else:
             recipe = client.post("api/recipe/", body)
-        stored = client.get(f"api/recipe/{recipe['id']}/")
     except tc.TandoorError as e:
         print(f"upload failed: {e}", file=sys.stderr)
         made = [f"{kind} '{v['name']}' (id {v['id']})" for kind in KINDS for v in created[kind].values()]
@@ -466,6 +475,11 @@ def _cmd_upload(args: argparse.Namespace) -> int:
             print("Already created: " + ", ".join(made) + ". A new match finds them as exact.", file=sys.stderr)
         return 1
     print(f"{'Updated' if updating else 'Created'}: {recipe['id']} {cfg.url}/recipe/{recipe['id']}/")
+    try:
+        stored = client.get(f"api/recipe/{recipe['id']}/")
+    except tc.TandoorError as e:
+        print(f"the recipe is saved, but reading it back failed: {e}. Check it in Tandoor and do not upload this plan again.", file=sys.stderr)
+        return 1
     diffs = tm.read_back_diff(body, stored)
     for d in diffs:
         print(f"Difference after read-back: {d}", file=sys.stderr)

@@ -1,41 +1,51 @@
 # Phase 2 (Tandoor): handoff
 
-Status on 2026-11-06: Tasks 1–10 of `2026-11-05-cc-chef-phase-2-tandoor.md` are done and committed on `feat/phase-2-tandoor`. Task 11 (live verification) is open and is the gate before merge to `main`.
+Status on 2026-11-06: Tasks 1–11 of `2026-11-05-cc-chef-phase-2-tandoor.md` are done and committed on `feat/phase-2-tandoor`. Task 11 (live verification against Tandoor 2.7.2) passed after two fixes. What is left is the merge to `main`.
 
 ## State
 
-- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (83 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests), on Python 3.12 and 3.15. Python 3.9 is unverified.
-- Dry runs of scenarios J–O and the smoke test (see `tests/README.md`) passed against the fake server. Scenario M reached its update only after recovering from one denied call, and was not re-run after the last text fix.
-- Nothing in the code has touched a real Tandoor instance. Every API fact in `plugins/cc-chef/skills/_shared/tandoor-api.md` is still marked `from source, 2026-11-05`.
+- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (91 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests). Python 3.9 is unverified.
+- `python3 tests/tandoor/live_smoke.py --run` ran against a fresh, empty test instance: 35 results, 0 FAIL, and it removes everything it creates. It is opt-in and needs `TANDOOR_URL` and `TANDOOR_TOKEN` (write scope).
+- One real food merge went through the `tandoor-food-cleanup` flow: the notes moved, the recipe stayed intact, the alias exists, the kept food was unchanged, and the source's properties were deleted with it.
+- `tandoor-api.md` section 4 has a status column per fact: `verified against 2.7.2, 2026-11-06`, corrected by the live check, or still `from source, 2026-11-05`.
 
-## Task 11: what to do next session
+## What the live check changed
 
-Needs the owner. Do not paste the token into the chat.
+- `numrecipe` is only on a single entry with `?extended=1`, never in the lists. `foods-report` now asks for the members of duplicate groups one by one.
+- `GET /api/ingredient/?simple=1` drops `used_in_recipes`. `group-plan` no longer sends `simple`; before, every preview said "recipe unknown" and warned about hidden recipes.
+- The fake server now behaves like the instance in both points, and tests pin both fixes.
 
-1. Set `TANDOOR_URL` and `TANDOOR_TOKEN` in the shell, start Claude Code from that shell, and make an instance backup before any write.
-2. Reads only first: `check`, `GET /openapi/` (compare request shapes with `tandoor-api.md`), `foods-report`, `pull` on one real recipe.
-3. Write `tests/tandoor/live_smoke.py` (opt-in; the name must not match `test_*.py`). It uploads a recipe named `cc-chef-test-<date>`, using a food that has properties, and checks:
-   - a `POST` with `{id, name}` leaves the food's `name`, `plural_name` and `properties` unchanged (the riskiest assumption);
-   - `PATCH` with `steps` replaces the steps and keeps image, `rating` and `private`;
-   - a note-only `PATCH` on an ingredient works;
-   - `?extended=1` returns `numrecipe` on a single entry;
-   - replaced steps do not stay behind as orphans (record the result either way).
-4. Delete the test recipe and any test foods; confirm they are gone.
-5. One real merge, only through `/cc-chef:tandoor-food-cleanup`, with the owner approving a small group. Confirm in the Tandoor UI: notes moved, recipes intact, alias present, kept food's nutrition untouched.
-6. Replace `from source, 2026-11-05` with `verified against <version>, <date>` for each confirmed fact in `tandoor-api.md`. For a difference: fix the code, adjust the fake server and its test, and re-run the suite.
-7. Also confirm the three assumptions in `tandoor-api.md` section 4.4: `used_in_recipes` on `GET /api/ingredient/` rows as `{id, name}`, `numrecipe` on a single-entry GET with `extended=1`, and `GET /api/recipe/?query=<title>`.
-8. Commit as `test: ✅ verify Tandoor support against a live instance`. Merge only after this passes.
+## Review of the branch (`/code-review high main`, 2026-11-06)
+
+Fixed, each with a test that fails on the old code:
+
+- `upload`: a failed read-back after a successful save now prints the recipe id and says not to upload the plan again.
+- `pull` refuses to overwrite an existing file, so a second rework on the same day cannot destroy the first backup. `rework-recipe` adds `-2`, `-3` for a taken name.
+- `render_source` writes `(unnamed)` for a step without a name; `recipe_tool` rejects a bare `### 2.`.
+- `group-plan` stops with a message for ids that are not in the report.
+- "Maybe" groups pick the representative of each cluster after the recipe counts are loaded.
+
+Decided later or left open:
+
+- `match` creates a keyword without asking when only a fuzzy candidate exists, which differs from the rule for foods and units.
+- `build_index` binds an exact name to the first of several foods with that name.
+- `scripts/sync-config-table.sh` deletes every `|` line in the Key Config Files section: outside Phase 2, check separately.
+- The alias filter, `ALIAS_TYPES` and the unit-name set are repeated in several places.
+
+## Still unchecked
+
+- Whether the ingredient list leaves out other users' private recipes: needs a second user. The script treats a gap between `numrecipe` and the recipes reached as hidden recipes.
+- Alias matching on a real import. The merge creates the alias live; resolving it in `match` is only covered by `test_alias_from_a_merge_resolves_in_the_next_match` against the fake.
+- A wrong `name` in a nested `food` with `id` renames the food (from source, not tried).
+- Python 3.9.
 
 ## Rulings made during implementation
 
 - The commit trailer says `Claude Sonnet 5.5`, not the plan's `Claude Opus 5.5`, because that was the model doing the work. Cost if wrong: amend the trailers.
-- Task 11 was not run and `live_smoke.py` was not written, because both need the owner's instance. Cost if wrong: the riskiest assumption stays unchecked.
-- `group-plan` assumes `/api/ingredient/` lists each ingredient's recipes in `used_in_recipes` as `{id, name}` and that `?extended=1` works on a single entry. Cost if wrong: previews lack recipe names and every food gets the hidden-recipes warning.
-- The final review was a self-review plus one advisor pass, with no fresh subagent. A fresh-reviewer pass of the branch is still open.
+- The branch was pushed on the owner's explicit request, although the plan says "never push".
 
 ## Deferred minors
 
 - Plan and report files stay in `/tmp` when a session refuses `rm`.
 - `group-apply` does not re-list a source's ingredients before merging, so an ingredient added after `group-plan` loses its detail on merge.
 - "Maybe" duplicate groups list one best entry per cluster and can overlap a "same" group's keep entry.
-- Python 3.9 is unverified.

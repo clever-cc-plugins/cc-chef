@@ -167,7 +167,7 @@ def render_source(recipe: dict) -> str:
     if facts:
         lines += [""] + facts
     for n, step in enumerate(recipe.get("steps", []), 1):
-        lines += ["", f"### {n}. {step.get('name') or ''}".rstrip()]
+        lines += ["", f"### {n}. {step.get('name') or '(unnamed)'}"]  # recipe_tool needs text after the number
         if step.get("step_recipe"):
             lines.append("[embedded recipe]")
         if step.get("file"):

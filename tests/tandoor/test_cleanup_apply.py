@@ -153,6 +153,15 @@ class ApplyTests(FakeCase):
         self.assertNotIn("unknown", text)
         self.assertNotIn("this token reaches", text)
 
+    def test_group_plan_names_ids_that_are_not_in_the_report(self):
+        self.run_cli("foods-report", "-o", self.report)
+        for keep, merge in (("1", "2,99"), ("999", "2")):
+            r = self.run_cli("group-plan", self.report, "--kind", "food", "--keep", keep, "--merge", merge, "-o", self.gplan)
+            self.assertEqual(r.returncode, 1, (keep, merge))
+            self.assertIn("99" if keep == "1" else "999", r.stderr)
+            self.assertNotIn("Traceback", r.stderr)
+        self.assertFalse(self.gplan.exists())
+
     def test_alias_created_once(self):
         self.make_plan()
         self.assertEqual(self.apply().returncode, 0)

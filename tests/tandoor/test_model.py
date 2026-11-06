@@ -24,6 +24,12 @@ def mini(ingredient="- **1 l** Wasser", title="Suppe", meta="", notes=""):
 
 
 class ModelTests(unittest.TestCase):
+    def test_render_source_unnamed_step_stays_a_valid_heading(self):
+        text = tm.render_source({"name": "Suppe", "steps": [{"name": "Kochen", "ingredients": []}, {"name": "", "ingredients": []}]})
+        headings = [line for line in text.splitlines() if line.startswith("### ")]
+        self.assertEqual(len(headings), 2)
+        self.assertTrue(all(rt._STEP.match(h) for h in headings), headings)
+
     def test_parse_amount(self):
         for raw, want in [("½", (.5, None)), ("0,5", (.5, None)), ("1 1/2", (1.5, None)), ("1–2", (1.0, 2.0)), ("1-2", (1.0, 2.0)), (None, (None, None))]:
             self.assertEqual(tm.parse_amount(raw), want, raw)
