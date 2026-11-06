@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
 LOGIN_HTML = "<html><body><form>Login</form></body></html>"
-COLLECTIONS = ("food", "unit", "keyword", "automation", "recipe")
+COLLECTIONS = ("food", "unit", "keyword", "automation", "recipe", "unit-conversion")
 
 
 class FakeTandoor:
@@ -115,6 +115,8 @@ class FakeTandoor:
     def list_items(self, coll, items, query):
         if query.get("query"):
             items = [i for i in items if query["query"].casefold() in i.get("name", "").casefold()]
+        if query.get("extended") == "1" and coll in ("food", "unit"):
+            items = [{**i, "numrecipe": i.get("numrecipe", self.recipes_using(coll, i["id"]))} for i in items]
         cap = 100 if coll == "recipe" else 200
         size = min(int(query.get("page_size", 50)), cap)
         page = int(query.get("page", 1))
@@ -134,6 +136,12 @@ class FakeTandoor:
         return 201, "application/json", new, {}
 
     # -- recipes: nested writes like drf-writable-nested ---------------------
+    def recipes_using(self, coll, item_id):
+        return sum(
+            any((ing.get(coll) or {}).get("id") == item_id for st in r["steps"] for ing in st["ingredients"])
+            for r in self.db["recipe"]
+        )
+
     def next_id(self, coll):
         return max((i["id"] for i in self.db[coll]), default=0) + 1
 

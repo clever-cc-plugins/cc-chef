@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import recipe_tool as rt
+import tandoor_cleanup as tcl
 import tandoor_client as tc
 import tandoor_match as tmatch
 import tandoor_model as tm
@@ -168,6 +169,40 @@ def _cmd_pull(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_foods_report(args: argparse.Namespace) -> int:
+    client = tc.Client(tc.load_config())
+    foods = client.list_all("api/food/", {"extended": 1})
+    units = client.list_all("api/unit/", {"extended": 1})
+    conversions = client.list_all("api/unit-conversion/")
+    aliases = [
+        a for a in client.list_all("api/automation/")
+        if a.get("type") in ("FOOD_ALIAS", "UNIT_ALIAS") and not a.get("disabled")
+    ]
+    unit_names = {u["name"] for u in units} | {u["plural_name"] for u in units if u.get("plural_name")}
+    groups: list[dict] = []
+    for kind, entries in (("food", foods), ("unit", units)):
+        found = sorted(
+            tcl.duplicate_groups(entries, unit_names, kind),
+            key=lambda g: (-sum(m.get("numrecipe") or 0 for m in g["members"]), g["key"]),
+        )
+        groups += [{"id": f"{kind[0]}{n}", **g} for n, g in enumerate(found, 1)]
+    polluted = []
+    for f in foods:
+        core, details = tcl.split_food_name(f["name"], unit_names)
+        if details:
+            polluted.append({"id": f["id"], "name": f["name"], "core": core, "details": details})
+    _save(args.output, {
+        "base_url": client.config.url, "foods": foods, "units": units, "groups": groups,
+        "polluted": polluted, "conversions": conversions, "aliases": aliases,
+    })
+    same = sum(g["confidence"] == "same" for g in groups)
+    print(
+        f"{len(foods)} foods, {len(units)} units, {len(groups)} groups ({same} same, {len(groups) - same} maybe), "
+        f"{len(polluted)} foods with details in the name. Report written to {args.output}"
+    )
+    return 0
+
+
 def _maps(plan: dict, created: dict | None = None) -> dict[str, dict]:
     """Resolved entries per kind, keyed by normalized text; a new entry shows its text until it has an id."""
     out: dict[str, dict] = {}
@@ -318,6 +353,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("id", type=int)
     p.add_argument("-o", "--output", required=True)
     p.set_defaults(func=_cmd_pull)
+    p = sub.add_parser("foods-report", help="read-only report of duplicate and polluted foods and units")
+    p.add_argument("-o", "--output", required=True)
+    p.set_defaults(func=_cmd_foods_report)
     args = parser.parse_args(argv)
     try:
         return args.func(args)
