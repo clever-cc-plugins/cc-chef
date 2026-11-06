@@ -203,6 +203,154 @@ def _cmd_foods_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _live_entry(client: tc.Client, kind: str, entry_id: int) -> dict | None:
+    try:
+        return client.get(f"api/{kind}/{entry_id}/", {"extended": 1})
+    except tc.TandoorError as e:
+        if e.status == 404:
+            return None
+        raise
+
+
+def _same_instance(plan: dict, cfg: tc.Config) -> bool:
+    if plan["base_url"].rstrip("/") != cfg.url:
+        print(f"the plan was made for {plan['base_url']}, but TANDOOR_URL is {cfg.url}", file=sys.stderr)
+        return False
+    return True
+
+
+def _cmd_group_plan(args: argparse.Namespace) -> int:
+    report = _load_plan(args.report)
+    cfg = tc.load_config()
+    if not _same_instance(report, cfg):
+        return 1
+    client = tc.Client(cfg)
+    try:
+        details = {int(k): v for k, _, v in (d.partition("=") for d in args.detail)}
+        merge = [int(i) for i in args.merge.split(",") if i.strip()]
+    except ValueError:
+        print("--detail takes <id>=<text>, --merge takes comma-separated ids", file=sys.stderr)
+        return 1
+    kind = args.kind
+    keep = _live_entry(client, kind, args.keep)
+    if keep is None:
+        print(f"the entry to keep (id {args.keep}) no longer exists", file=sys.stderr)
+        return 1
+    live = {args.keep: keep}
+    for i in merge:
+        entry = _live_entry(client, kind, i)
+        if entry is None:
+            print(f"{kind} {i} no longer exists and is left out")
+        else:
+            live[i] = entry
+    state = {
+        **report,
+        kind + "s": [live.get(e["id"], e) for e in report[kind + "s"]],
+        "aliases": [
+            a for a in client.list_all("api/automation/")
+            if a.get("type") in ("FOOD_ALIAS", "UNIT_ALIAS") and not a.get("disabled")
+        ],
+    }
+    ingredients: dict[int, list] = {}
+    if kind == "food":
+        for i in [m for m in merge if m in live] + ([args.keep] if args.rename else []):
+            ingredients[i] = client.list_all("api/ingredient/", {"food": i, "simple": 1})
+    plan = tcl.build_group_plan(state, kind, args.keep, [m for m in merge if m in live], details, ingredients, args.rename)
+    _save(args.output, plan)
+    print(f"Plan written: {args.output} ({len(plan['ops'])} operations, {len(plan['warnings'])} warnings, {len(plan['problems'])} problems)")
+    return 0
+
+
+def _describe_op(op: dict, plan: dict) -> str:
+    names = {e["id"]: e["name"] for e in [plan["keep"], *plan["sources"]]}
+    if op["op"] == "note":
+        where = ", ".join(op["recipes"]) or "recipe unknown"
+        return f"note of ingredient {op['ingredient']} ({op['food']}, in {where}): '{op['before']}' -> '{op['note']}'"
+    if op["op"] == "merge":
+        return f"merge {plan['kind']} '{names[op['source']]}' (id {op['source']}) into '{names[op['target']]}' (id {op['target']})"
+    if op["op"] == "rename":
+        return f"rename '{names[op['id']]}' (id {op['id']}) to '{op['name']}'"
+    if op["op"] == "alias":
+        return f"add alias: '{op['name']}' -> '{op['target']}'"
+    return f"point alias {op['id']} at '{op['target']}'"
+
+
+def _cmd_group_preview(args: argparse.Namespace) -> int:
+    plan = _load_plan(args.plan)
+    print(f"Keep {plan['kind']}: '{plan['keep']['name']}' (id {plan['keep']['id']})")
+    for op in plan["ops"]:
+        print(f"- {_describe_op(op, plan)}")
+    for w in plan["warnings"]:
+        print(f"WARNING: {w}")
+    for p in plan["problems"]:
+        print(f"PROBLEM: {p}")
+    if plan["problems"]:
+        print("Fix the problems and run group-plan again; no confirmation code is given.")
+        return 1
+    print("Merges cannot be undone. Make sure you have an instance backup.")
+    print(f"Confirm: {plan_digest(plan)}")
+    return 0
+
+
+def _stale(client: tc.Client, plan: dict) -> str | None:
+    kind = plan["kind"]
+    for entry in [plan["keep"], *plan["sources"]]:
+        live = _live_entry(client, kind, entry["id"])
+        if live is None or live["name"] != entry["name"]:
+            return f"{kind} '{entry['name']}' (id {entry['id']}) changed or is gone"
+    for op in plan["ops"]:
+        if op["op"] == "note" and (client.get(f"api/ingredient/{op['ingredient']}/").get("note") or "").strip() != op["before"]:
+            return f"ingredient {op['ingredient']} was edited"
+    return None
+
+
+def _run_op(client: tc.Client, plan: dict, op: dict) -> None:
+    kind = plan["kind"]
+    if op["op"] == "note":
+        client.patch(f"api/ingredient/{op['ingredient']}/", {"note": op["note"]})
+    elif op["op"] == "merge":
+        client.put(f"api/{kind}/{op['source']}/merge/{op['target']}/")
+    elif op["op"] == "rename":
+        client.patch(f"api/{kind}/{op['id']}/", {"name": op["name"]})
+    elif op["op"] == "alias":
+        client.post("api/automation/", {
+            "type": tcl.ALIAS_TYPES[kind], "name": f"cc-chef: {op['name']}", "param_1": op["name"],
+            "param_2": op["target"], "disabled": False,
+        })
+    else:
+        client.patch(f"api/automation/{op['id']}/", {"param_2": op["target"]})
+
+
+def _cmd_group_apply(args: argparse.Namespace) -> int:
+    plan = _load_plan(args.plan)
+    cfg = tc.load_config()
+    if args.confirm != plan_digest(plan):
+        print("the confirmation code does not match the plan: run group-preview again and use its code", file=sys.stderr)
+        return 1
+    if plan["problems"]:
+        print("the plan has problems: run group-preview", file=sys.stderr)
+        return 1
+    if not _same_instance(plan, cfg):
+        return 1
+    client = tc.Client(cfg)
+    done: list[str] = []
+    try:
+        stale = _stale(client, plan)
+        if stale:
+            print(f"{stale} since the plan was made. Run group-plan again.", file=sys.stderr)
+            return 1
+        for op in plan["ops"]:
+            _run_op(client, plan, op)
+            done.append(_describe_op(op, plan))
+            print(f"done: {done[-1]}")
+    except tc.TandoorError as e:
+        print(f"failed: {e}", file=sys.stderr)
+        print(f"Done before the failure: {len(done)} operations. Run group-plan again to continue.", file=sys.stderr)
+        return 1
+    print(f"Finished: {len(done)} operations")
+    return 0
+
+
 def _maps(plan: dict, created: dict | None = None) -> dict[str, dict]:
     """Resolved entries per kind, keyed by normalized text; a new entry shows its text until it has an id."""
     out: dict[str, dict] = {}
@@ -278,8 +426,7 @@ def _cmd_upload(args: argparse.Namespace) -> int:
     if _open_items(plan) or plan["problems"]:
         print("the plan still has open decisions or problems: run preview", file=sys.stderr)
         return 1
-    if plan["base_url"].rstrip("/") != cfg.url:
-        print(f"the plan was made for {plan['base_url']}, but TANDOOR_URL is {cfg.url}", file=sys.stderr)
+    if not _same_instance(plan, cfg):
         return 1
     if plan["existing"] and not args.allow_duplicate:
         print("a recipe with this name already exists: use --allow-duplicate or update the existing recipe", file=sys.stderr)
@@ -356,6 +503,22 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("foods-report", help="read-only report of duplicate and polluted foods and units")
     p.add_argument("-o", "--output", required=True)
     p.set_defaults(func=_cmd_foods_report)
+    p = sub.add_parser("group-plan", help="plan the cleanup of one approved group")
+    p.add_argument("report")
+    p.add_argument("--kind", choices=("food", "unit"), required=True)
+    p.add_argument("--keep", type=int, required=True)
+    p.add_argument("--merge", default="")
+    p.add_argument("--detail", action="append", default=[])
+    p.add_argument("--rename")
+    p.add_argument("-o", "--output", required=True)
+    p.set_defaults(func=_cmd_group_plan)
+    p = sub.add_parser("group-preview", help="show what a group plan would do; prints the confirmation code")
+    p.add_argument("plan")
+    p.set_defaults(func=_cmd_group_preview)
+    p = sub.add_parser("group-apply", help="run a confirmed group plan")
+    p.add_argument("plan")
+    p.add_argument("--confirm")
+    p.set_defaults(func=_cmd_group_apply)
     args = parser.parse_args(argv)
     try:
         return args.func(args)

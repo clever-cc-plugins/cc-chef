@@ -94,7 +94,12 @@ class FakeTandoor:
     def route(self, method, rest, query, body):
         if rest == "server-settings/current/":
             return 200, "application/json", {"version": self.version}, {}
+        merge = re.fullmatch(r"(food|unit)/(\d+)/merge/(\d+)/", rest)
+        if merge and method == "PUT":
+            return self.merge(merge.group(1), int(merge.group(2)), int(merge.group(3)))
         m = re.fullmatch(r"([a-z-]+)/(?:(\d+)/)?", rest)
+        if m and m.group(1) == "ingredient":
+            return self.ingredient_route(method, m.group(2), query, body)
         if not m or m.group(1) not in self.db:
             return 404, "application/json", {"detail": "Not found."}, {}
         coll, item_id = m.group(1), m.group(2)
@@ -107,16 +112,18 @@ class FakeTandoor:
         if found is None:
             return 404, "application/json", {"detail": "Not found."}, {}
         if method == "GET":
-            return 200, "application/json", found, {}
+            return 200, "application/json", self.extend(coll, found, query), {}
         if method == "PATCH" and coll == "recipe":
             return self.patch_recipe(found, body)
+        if method == "PATCH":
+            found.update(body)
+            return 200, "application/json", found, {}
         return 405, "application/json", {"detail": "Method not allowed."}, {}
 
     def list_items(self, coll, items, query):
         if query.get("query"):
             items = [i for i in items if query["query"].casefold() in i.get("name", "").casefold()]
-        if query.get("extended") == "1" and coll in ("food", "unit"):
-            items = [{**i, "numrecipe": i.get("numrecipe", self.recipes_using(coll, i["id"]))} for i in items]
+        items = [self.extend(coll, i, query) for i in items]
         cap = 100 if coll == "recipe" else 200
         size = min(int(query.get("page_size", 50)), cap)
         page = int(query.get("page", 1))
@@ -136,6 +143,63 @@ class FakeTandoor:
         return 201, "application/json", new, {}
 
     # -- recipes: nested writes like drf-writable-nested ---------------------
+    def extend(self, coll, item, query):
+        if query.get("extended") == "1" and coll in ("food", "unit"):
+            return {**item, "numrecipe": item.get("numrecipe", self.recipes_using(coll, item["id"]))}
+        return item
+
+    def all_ingredients(self):
+        for recipe in self.db["recipe"]:
+            for step in recipe["steps"]:
+                for ing in step["ingredients"]:
+                    yield recipe, ing
+
+    def ingredient_route(self, method, item_id, query, body):
+        if item_id is None and method == "GET":
+            rows = []
+            for recipe, ing in self.all_ingredients():
+                if query.get("food") and str((ing.get("food") or {}).get("id")) != query["food"]:
+                    continue
+                if query.get("simple") == "1" and recipe.get("hidden"):
+                    continue  # other users' private recipes
+                rows.append({**ing, "used_in_recipes": [{"id": recipe["id"], "name": recipe["name"]}]})
+            return self.list_items("ingredient", rows, query)
+        found = next((i for _, i in self.all_ingredients() if i["id"] == int(item_id or 0)), None)
+        if found is None:
+            return 404, "application/json", {"detail": "Not found."}, {}
+        if method == "PATCH":
+            found.update(body)
+        return 200, "application/json", found, {}
+
+    def merge(self, coll, source, target):
+        items = self.db[coll]
+        src = next((i for i in items if i["id"] == source), None)
+        dst = next((i for i in items if i["id"] == target), None)
+        if src is None or dst is None:
+            return 404, "application/json", {"detail": "Not found."}, {}
+        if coll == "food":
+            todo, below = [source], set()
+            while todo:
+                cur = todo.pop()
+                for f in items:
+                    p = f.get("parent")
+                    if (p.get("id") if isinstance(p, dict) else p) == cur and f["id"] not in below:
+                        below.add(f["id"])
+                        todo.append(f["id"])
+            if target in below:
+                return 403, "application/json", {"detail": "Cannot merge a food into one of its descendants."}, {}
+        for _, ing in self.all_ingredients():
+            if (ing.get(coll) or {}).get("id") == source:
+                ing[coll] = {"id": dst["id"], "name": dst["name"]}
+        items.remove(src)
+        def involves(c):
+            ref = lambda x: x.get("id") if isinstance(x, dict) else x  # noqa: E731
+            if coll == "food":
+                return ref(c.get("food")) == source
+            return source in (ref(c.get("base_unit")), ref(c.get("converted_unit")))
+        self.db["unit-conversion"] = [c for c in self.db["unit-conversion"] if not involves(c)]
+        return 200, "application/json", {}, {}
+
     def recipes_using(self, coll, item_id):
         return sum(
             any((ing.get(coll) or {}).get("id") == item_id for st in r["steps"] for ing in st["ingredients"])

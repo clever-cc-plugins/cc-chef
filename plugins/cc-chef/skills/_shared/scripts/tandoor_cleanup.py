@@ -130,3 +130,105 @@ def descendants(food_id: int, foods: list[dict]) -> set[int]:
                 out.add(c)
                 todo.append(c)
     return out
+
+
+NOTE_LIMIT = 256
+ALIAS_TYPES = {"food": "FOOD_ALIAS", "unit": "UNIT_ALIAS"}
+
+
+def merged_note(note: str | None, detail: str) -> str:
+    """Append `detail` to a note with ', ', unless the note already holds every part of it."""
+    note = (note or "").strip()
+    have = {normalize(p) for p in note.split(", ")}
+    if all(normalize(p) in have for p in detail.split(", ")):
+        return note
+    return f"{note}, {detail}" if note else detail
+
+
+def _ref_id(x):
+    return x.get("id") if isinstance(x, dict) else x
+
+
+def _involves(conversion: dict, kind: str, entry_id: int) -> bool:
+    if kind == "food":
+        return _ref_id(conversion.get("food")) == entry_id
+    return entry_id in (_ref_id(conversion.get("base_unit")), _ref_id(conversion.get("converted_unit")))
+
+
+def build_group_plan(report, kind, keep, merge, details, ingredients, rename=None) -> dict:
+    """Plan the note moves, merges, rename and aliases for one approved group.
+
+    `report` holds the entries to act on (refreshed from the live instance by the caller), `ingredients` maps a
+    food id to its ingredients, `details` maps an id to a hand-written detail that replaces the one found in its name.
+    """
+    entries = {e["id"]: e for e in report[kind + "s"]}
+    keep_entry, sources = entries[keep], [entries[i] for i in merge if i in entries]
+    unit_names = {u["name"] for u in report["units"]} | {u["plural_name"] for u in report["units"] if u.get("plural_name")}
+    target_name = rename or keep_entry["name"]
+    alias_type = ALIAS_TYPES[kind]
+    ops: list[dict] = []
+    warnings: list[str] = []
+    problems: list[str] = []
+
+    if keep in merge:
+        problems.append("the entry to keep is also listed as a source")
+    if not sources and not rename:
+        problems.append("nothing to do: no source entry is left and no --rename was given")
+    if rename and any(e["id"] != keep and normalize(e["name"]) == normalize(rename) for e in report[kind + "s"]):
+        problems.append(f"'{rename}' already exists: merge into it instead of renaming")
+    if kind == "food":
+        for src in sources:
+            if keep in descendants(src["id"], report["foods"]):
+                problems.append(f"'{keep_entry['name']}' is a child of '{src['name']}': Tandoor does not merge a food into its own descendant")
+
+    note_holders = sources + ([keep_entry] if rename else [])
+    if kind == "food":
+        for src in note_holders:
+            detail = details.get(src["id"]) or split_food_name(src["name"], unit_names)[1]
+            if not detail:
+                continue
+            for item in ingredients.get(src["id"], []):
+                before = (item.get("note") or "").strip()
+                after = merged_note(before, detail)
+                if after == before:
+                    continue
+                if len(after) > NOTE_LIMIT:
+                    problems.append(f"the note of ingredient {item['id']} would be {len(after)} characters (max {NOTE_LIMIT})")
+                    continue
+                recipes = [r["name"] for r in item.get("used_in_recipes", [])]
+                ops.append({"op": "note", "ingredient": item["id"], "note": after, "before": before, "food": src["name"], "recipes": recipes})
+
+    for src in sources:
+        ops.append({"op": "merge", "source": src["id"], "target": keep})
+    if rename:
+        ops.append({"op": "rename", "id": keep, "name": rename})
+
+    existing = report["aliases"]
+    for src in sources:
+        if normalize(src["name"]) == normalize(target_name):
+            continue
+        if not any(a.get("type") == alias_type and normalize(a.get("param_1") or "") == normalize(src["name"]) for a in existing):
+            ops.append({"op": "alias", "name": src["name"], "target": target_name})
+    gone = {normalize(s["name"]) for s in sources} | ({normalize(keep_entry["name"])} if rename else set())
+    for a in existing:
+        if a.get("type") == alias_type and normalize(a.get("param_2") or "") in gone and normalize(a["param_2"]) != normalize(target_name):
+            ops.append({"op": "repoint-alias", "id": a["id"], "target": target_name})
+
+    for src in sources:
+        props = len(src.get("properties") or [])
+        if props:
+            warnings.append(f"'{src['name']}' has {props} properties (nutrition values): the merge deletes them")
+        convs = sum(_involves(c, kind, src["id"]) for c in report["conversions"])
+        if convs:
+            warnings.append(f"'{src['name']}' has {convs} unit conversions: the merge deletes them")
+        if kind == "food":
+            reached = len({r["id"] for i in ingredients.get(src["id"], []) for r in i.get("used_in_recipes", [])})
+            used = src.get("numrecipe") or 0
+            if used > reached:
+                warnings.append(
+                    f"'{src['name']}' is used in {used} recipes, but this token reaches {reached}: the detail cannot be moved into the others, and the merge cannot be undone"
+                )
+    return {
+        "version": 1, "base_url": report["base_url"], "kind": kind, "keep": keep_entry, "sources": sources,
+        "ops": ops, "warnings": warnings, "problems": problems,
+    }
