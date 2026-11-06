@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   unittest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Python 3.9 has no build for newer images
     strategy:
       fail-fast: false
       matrix:
