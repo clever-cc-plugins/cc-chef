@@ -402,10 +402,11 @@ def _cmd_preview(args: argparse.Namespace) -> int:
         print(f"The replaced steps cannot be restored. For a backup run: tandoor.py pull {plan['tandoor_id']} -o <file>")
         print()
     print(tm.render_source(_finalize(plan)))
-    new = [(kind, e["text"]) for kind in KINDS for _, e in _entries(plan, kind) if e["decision"] == "create"]
+    new = [(kind, e) for kind in KINDS for _, e in _entries(plan, kind) if e["decision"] == "create"]
     print("New database entries (will be created):" if new else "New database entries: none")
-    for kind, text in new:
-        print(f"- {kind}: {text}")
+    for kind, e in new:
+        similar = "; ".join(f"{c['name']} (id {c['id']})" for c in e["candidates"][:3])  # a keyword is created without asking: show what it resembles
+        print(f"- {kind}: {e['text']}" + (f" (similar: {similar})" if similar else ""))
     if plan["existing"]:
         print("A recipe with this name already exists:")
         for r in plan["existing"]:

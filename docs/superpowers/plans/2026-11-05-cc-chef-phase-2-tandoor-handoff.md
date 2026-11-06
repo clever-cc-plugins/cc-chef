@@ -4,7 +4,7 @@ Status on 2026-11-06: Tasks 1–11 of `2026-11-05-cc-chef-phase-2-tandoor.md` ar
 
 ## State
 
-- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (91 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests). Python 3.9 is unverified.
+- Both test suites pass: `python3 -m unittest discover -s tests/tandoor -v` (93 tests) and `python3 -m unittest discover -s tests/recipe-tool -v` (42 tests). Python 3.9 is unverified.
 - `python3 tests/tandoor/live_smoke.py --run` ran against a fresh, empty test instance: 35 results, 0 FAIL, and it removes everything it creates. It is opt-in and needs `TANDOOR_URL` and `TANDOOR_TOKEN` (write scope).
 - One real food merge went through the `tandoor-food-cleanup` flow: the notes moved, the recipe stayed intact, the alias exists, the kept food was unchanged, and the source's properties were deleted with it.
 - `tandoor-api.md` section 4 has a status column per fact: `verified against 2.7.2, 2026-11-06`, corrected by the live check, or still `from source, 2026-11-05`.
@@ -24,11 +24,11 @@ Fixed, each with a test that fails on the old code:
 - `render_source` writes `(unnamed)` for a step without a name; `recipe_tool` rejects a bare `### 2.`.
 - `group-plan` stops with a message for ids that are not in the report.
 - "Maybe" groups pick the representative of each cluster after the recipe counts are loaded.
+- `preview` shows what a new keyword resembles (`similar: Familie (id 7)`); keywords stay auto-created, since a tag is cheap to rename and a question per tag would nag on every upload.
+- `build_index` takes, among entries with the same normalized name (`Zwiebel`, `zwiebel`), the one the cleanup would keep (`suggest_keep`) instead of the first listed.
 
 Decided later or left open:
 
-- `match` creates a keyword without asking when only a fuzzy candidate exists, which differs from the rule for foods and units.
-- `build_index` binds an exact name to the first of several foods with that name.
 - `scripts/sync-config-table.sh` deletes every `|` line in the Key Config Files section: outside Phase 2, check separately.
 - The alias filter, `ALIAS_TYPES` and the unit-name set are repeated in several places.
 

@@ -57,6 +57,14 @@ class UploadTests(FakeCase):
         self.assertIn("Ansetzen", r.stdout)
         self.assertIn("Mehl", r.stdout)
 
+    def test_preview_shows_what_a_new_keyword_resembles(self):
+        self.fake.db["keyword"] = [{"id": 31, "name": "Tests"}]
+        self.match()
+        self.resolve_all()
+        new = self.run_cli("preview", self.plan_path).stdout.split("New database entries")[1]
+        self.assertIn("- keyword: Test (similar: Tests (id 31))", new)
+        self.assertIn("- keyword: cc-chef\n", new)  # no look-alike, no hint
+
     def test_preview_warns_existing_recipe(self):
         self.fake.db["recipe"] = [{"id": 50, "name": "Testgericht", "keywords": [], "steps": [], "updated_at": "x"}]
         self.match()

@@ -24,6 +24,13 @@ class MatchTests(unittest.TestCase):
             m = match(t, self.idx)
             self.assertEqual((m["status"], m["id"], m["name"]), ("exact", 7, "Zwiebel"), t)
 
+    def test_equal_names_take_the_entry_the_cleanup_would_keep(self):
+        plain = {"id": 5, "name": "Zwiebel", "plural_name": None, "properties": []}
+        rich = {"id": 41, "name": "zwiebel", "plural_name": None, "properties": [{"id": 1}]}
+        for order in ([plain, rich], [rich, plain]):  # not whichever the list shows first
+            m = match("Zwiebel", build_index(order, []))
+            self.assertEqual((m["status"], m["id"]), ("exact", 41), order)
+
     def test_alias(self):
         m = match("Tomaten, passiert", self.idx)
         self.assertEqual((m["status"], m["id"], m["name"]), ("alias", 8, "Passierte Tomaten"))

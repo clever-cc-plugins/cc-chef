@@ -8,6 +8,7 @@ from __future__ import annotations
 import difflib
 from dataclasses import dataclass, field
 
+from tandoor_cleanup import suggest_keep
 from tandoor_model import normalize
 
 CANDIDATE_CUTOFF = 0.75
@@ -21,10 +22,13 @@ class Index:
 
 def build_index(entries: list[dict], aliases: list[dict]) -> Index:
     idx = Index()
+    same_name: dict[str, list[dict]] = {}
     for e in entries:
         for name in (e.get("name"), e.get("plural_name")):
             if name:
-                idx.exact.setdefault(normalize(name), e)
+                same_name.setdefault(normalize(name), []).append(e)
+    for key, found in same_name.items():  # "Zwiebel" and "zwiebel" are two entries: take the one the cleanup would keep, not the first listed
+        idx.exact[key] = next(m for m in found if m["id"] == suggest_keep(found))
     for a in aliases:
         target = idx.exact.get(normalize(a.get("param_2") or ""))
         if target is not None and a.get("param_1"):
