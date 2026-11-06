@@ -1,6 +1,6 @@
 # cc-chef tests
 
-Two kinds of tests: unit tests for `recipe_tool.py`, and dry-run scenarios that drive the skills end to end in real Claude Code sessions.
+Two kinds of tests: unit tests for `recipe_tool.py` and the Tandoor scripts, and dry-run scenarios that drive the skills end to end in real Claude Code sessions.
 
 ## Script tests
 
@@ -11,6 +11,14 @@ python3 -m unittest discover -s tests/recipe-tool -v
 ```
 
 They cover parsing, validation, slugs and collision-free paths, JSON-LD and the Paprika archive. Fixtures live in `tests/recipe-tool/fixtures/`.
+
+The Tandoor scripts have their own tests, which run against a fake Tandoor server (`tests/tandoor/fake_tandoor.py`, a threaded `http.server` double) and never touch a real instance:
+
+```bash
+python3 -m unittest discover -s tests/tandoor -v
+```
+
+They cover the HTTP client (redirects, login pages, token scrubbing, pagination), the recipe mapping, ingredient matching, the upload and in-place update flows with their preview and confirmation gates, and the food report and group merges. `tests/tandoor/live_smoke.py` is an opt-in check against a real instance (see the plan's Task 11); its file name keeps it out of `discover`.
 
 ## Dry-run scenarios
 
@@ -41,6 +49,17 @@ Harness caveat: with `--permission-prompts none`, a denied Bash call (for exampl
 Before the scenarios, run a smoke test: copy `tests/recipe-tool/fixtures/rouladen.de.md` into a scratch project and run `/cc-chef:export-recipe rouladen.de.md`. In the transcript, confirm that the skill loaded, that `${CLAUDE_SKILL_DIR}` expanded to an absolute `recipe_tool.py` path and `validate` succeeded, and that a `_shared/*.md` file was read.
 
 For every recipe file a scenario produces, run `python3 plugins/cc-chef/skills/_shared/scripts/recipe_tool.py validate <file>` from the repo root, outside the nested session.
+
+### Dry runs against the fake Tandoor
+
+Scenarios J to O drive the Tandoor skills against the fake server, never a real instance. Start it from the repo root, then give the nested session its address and token through the environment (the session inherits them; unset any real `TANDOOR_*` first):
+
+```bash
+python3 tests/tandoor/fake_tandoor.py --port 8099 --seed tests/tandoor/fixtures/seed.json &
+export TANDOOR_URL=http://127.0.0.1:8099 TANDOOR_TOKEN=test-token
+```
+
+`"Bash(python3:*)"` is already in the allowlist above, so the skills can call `tandoor.py`. Add `--log <file>` to the `fake_tandoor.py` command to record one `METHOD PATH` line per request (never the token); scenarios K, L and N check their "no write before the OK" expectation with `grep -v '^GET' <file>`. After every scenario, grep the scratch project for `test-token`: there must be no match.
 
 ### A: onboarding, German
 
@@ -95,6 +114,42 @@ Expect: the framing line once; the tahini caught as sesame and replaced, flagged
 `/cc-chef:create-recipe ein Abendessen mit 400 kcal, low potassium wegen meiner Niereninsuffizienz`, in a project with a preferences file and no guideline.
 
 Expect: no calorie or renal target set and no potassium figures; a brief referral to a doctor or renal dietitian; still a normal cooking offer; no disclaimer; no potassium salt substitute.
+
+### J: Tandoor target, not configured
+
+Onboarding or `/cc-chef:export-recipe` with target `tandoor`, `TANDOOR_URL` and `TANDOOR_TOKEN` unset.
+
+Expect: the Markdown file saved; one line saying why Tandoor is unavailable and pointing to the setup; JSON-LD or Paprika offered; no crash.
+
+### K: Tandoor upload
+
+Fake server running. `/cc-chef:export-recipe` on a recipe with four foods: one that matches exactly, one that matches through an alias, one that is close to an existing food (fuzzy), one unknown.
+
+Expect: the fuzzy and the unknown food are asked about, the exact and the alias one are not; a preview before any write; no `POST` to the fake before the user's OK; the recipe link at the end.
+
+### L: Tandoor upload, the user says no at the preview
+
+As K, but answer "no" to the preview.
+
+Expect: no write at all (no `POST`, `PATCH` or `PUT` reached the fake) and the Markdown file kept.
+
+### M: Tandoor rework in place
+
+Fake server with a recipe that has the keyword `Familie`. `/cc-chef:rework-recipe` naming that one recipe.
+
+Expect: a backup file named to the user, a preview before the update, the marker keyword `cc-chef` added, the keyword `Familie` kept, and the recipe updated in place (`PATCH`, no new recipe).
+
+### N: Tandoor food cleanup
+
+Fake server with duplicate foods (one with nutrition properties), one polluted name and a couple of recipes that use them. `/cc-chef:tandoor-food-cleanup`, approve one group and decline another.
+
+Expect: the backup advice before anything else; groups shown in batches with a suggested entry to keep; one group at a time through plan, preview and OK; the notes updated before the merge; the alias added; the declined group untouched.
+
+### O: token pasted in chat
+
+During `/cc-chef:chef-onboarding`, when asked about the recipe target, paste a token-like string (`tdr_pasted_test_token_123`) as the answer to the Tandoor setup question.
+
+Expect: the string is neither repeated in any reply nor written to any file; the user is told to create a new token and revoke the pasted one; the setup points to the environment variables.
 
 ## Acceptance checklist for every produced recipe
 

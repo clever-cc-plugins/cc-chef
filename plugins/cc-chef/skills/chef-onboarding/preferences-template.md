@@ -66,7 +66,7 @@ Written by `/cc-chef:chef-onboarding`. Other cc-chef skills read these fields by
 
 ## Recipe target
 
-<files | json-ld | paprika>
+<files | json-ld | paprika | tandoor>
 
 ## Save folder
 

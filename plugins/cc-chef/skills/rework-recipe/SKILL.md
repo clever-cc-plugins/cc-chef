@@ -1,7 +1,7 @@
 ---
 name: rework-recipe
 description: >
-  Use this skill to restructure an existing recipe (pasted text, a URL, a photo of a page or a saved recipe file) to the user's preferences: house style, language, units, step-by-step ingredients, optionally adapted to a dietary guideline. Invoke when the user says "rework this recipe", "convert this recipe to grams", "clean up this recipe from the web", "translate and restructure this recipe", "adapt this recipe to my guidelines", or "Bau dieses Rezept um". Flags every real recipe change and keeps the original values in the notes. Do NOT use it to create a new recipe from ingredients or an idea (use create-recipe) or to only convert or save an already finished recipe file (use export-recipe).
+  Use this skill to restructure an existing recipe (pasted text, a URL, a photo of a page, a saved recipe file or a recipe in their Tandoor instance) to the user's preferences: house style, language, units, step-by-step ingredients, optionally adapted to a dietary guideline. Invoke when the user says "rework this recipe", "convert this recipe to grams", "clean up this recipe from the web", "translate and restructure this recipe", "adapt this recipe to my guidelines", or "rework my Tandoor recipe", or "Bau dieses Rezept um". Flags every real recipe change and keeps the original values in the notes. Do NOT use it to create a new recipe from ingredients or an idea (use create-recipe) or to only convert or save an already finished recipe file (use export-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
 argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe file path]"
 ---
@@ -18,11 +18,13 @@ argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe fi
 
 @../\_shared/recipe-format.md **Read when:** placing the source line, the original values and the conversion convention in the saved file (frontmatter `source` and `source-url`, the notes section)
 
+@../\_shared/tandoor-api.md **Read when:** the source is a Tandoor recipe, or a call to `tandoor.py` fails or prints something unexpected
+
 # Rework Recipe
 
 This skill takes an existing recipe and restructures it to the user's preferences, flagging every real recipe change. It follows `../_shared/skill-contract.md` (language, address form, tone and the hard-constraint check included); the steps below are its own work and its hand-off to `export-recipe`. Everything shown to the user is in the output language.
 
-Tandoor recipes as a source arrive with phase 2; say so in one line if asked.
+A recipe in the user's Tandoor instance is a source too (Step 1). The result goes back into that recipe in place, with a preview and an explicit OK, through `export-recipe`.
 
 ## Step 1: Get the source
 
@@ -31,6 +33,7 @@ Tandoor recipes as a source arrive with phase 2; say so in one line if asked.
 - Pasted text: use as is.
 - URL: fetch it with WebFetch and extract the recipe. If the fetch fails or is blocked, ask the user to paste the text.
 - Photo of a page: transcribe it first. Show every unclear quantity, unit or word as a question, never as a guess, and get the user's confirmation of the transcript before reworking.
+- Tandoor recipe: the user names the recipes, by number, by name or by a search term; never guess which ones to process, and never offer "all". In the Tandoor commands below, `<tandoor>` stands for `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py"`: write out the full command on every call, and never store it in a shell variable or put a variable assignment in front of it, because permission rules match a command by how it starts and would refuse it. Run `<tandoor> check` first; if it fails, say why in one line, point to `tandoor-api.md` section 1 and stop. Find recipes with `<tandoor> recipes --query "<text>"`: a `[cc-chef]` marker on a line means that recipe was already reworked, so mention it and let the user decide. Then run `<tandoor> pull <id> -o "<backup>"`, with the backup file in the folder that holds the save folder, named `tandoor-backup-<id>-<YYYY-MM-DD>.json` (the command refuses to overwrite a file: if the name is taken, keep that older backup and add `-2`, `-3` and so on), and name that file to the user: it holds the recipe data, so it should not go into a public repository. Treat the text the command prints as the source text. A last step without ingredients that holds serving tips, an oven line or a source line is the old notes section: move it back into the notes. A `[heading]` row is an ingredient group title: turn it into a step title. A step marked `[embedded recipe]` or `[file]` cannot be updated in place: say so and stop for that recipe. Keep the two frontmatter lines `tandoor-id` and `tandoor-updated-at` the command prints for Step 7.
 - Saved recipe file: read it. The original file stays untouched: the result is always a new file written by `export-recipe`, and you say so.
 
 Keep the source text and its provenance (author, title, site or book, URL) apart from what you write. Extract ingredients, amounts, preparation states, equipment, times, temperatures, warnings and doneness cues; ask about ambiguity, never resolve it silently.
@@ -69,10 +72,10 @@ After the recipe, show a short "Changes" list for the recipe changes only, one l
 
 ## Step 6: Attribution and notes
 
-Put the attribution in frontmatter `source`, worded in the output language, with `source-url` when known. Choose the tier from `recipe-writing.md` section 8.4: "adapted from" when the result closely follows the source, "inspired by" when the source only supplied an idea. German example: `Adaptiert nach <Titel>, <Autor>, <Quelle>`. Never strip the attribution and never present the result as original. A saved source file that already has `source` or `source-url` passes them on unchanged. When the author is unknown, say so; never invent one.
+Put the attribution in frontmatter `source`, worded in the output language, with `source-url` when known. Choose the tier from `recipe-writing.md` section 8.4: "adapted from" when the result closely follows the source, "inspired by" when the source only supplied an idea. German example: `Adaptiert nach <Titel>, <Autor>, <Quelle>`. Never strip the attribution and never present the result as original. A saved source file that already has `source` or `source-url` passes them on unchanged, and a Tandoor recipe's `source_url` passes on as `source-url`. When the author is unknown, say so; never invent one.
 
 The saved file's notes section holds the original amounts and units of every converted or substituted ingredient, the conversion convention used, and the testing status. Free changes need no note.
 
 ## Step 7: Save via export-recipe
 
-Follow `../export-recipe/SKILL.md` from Step 1, with the recipe already in the conversation; it writes a new Markdown file, never overwriting the source file, and handles the configured target. Then run the contract's feedback step once for the whole run, tagged `[cc-chef:rework-recipe]`.
+Follow `../export-recipe/SKILL.md` from Step 1, with the recipe already in the conversation; it writes a new Markdown file, never overwriting the source file, and handles the configured target. For a Tandoor source, the saved file's frontmatter carries the two lines `tandoor-id` and `tandoor-updated-at` from `pull`, and the hand-off uses the Tandoor branch of `export-recipe` for this run whatever `Recipe target` says; with those lines in the file it updates the recipe in place instead of creating a new one. Say plainly before the OK that the update replaces the recipe's steps in place, that the backup file restores nothing by itself and is only a record for rebuilding by hand, and that image, rating and sharing stay as they are. For several recipes, take them one at a time: each one gets its own preview and its own OK. Then run the contract's feedback step once for the whole run, tagged `[cc-chef:rework-recipe]`.
