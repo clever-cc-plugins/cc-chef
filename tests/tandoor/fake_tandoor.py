@@ -274,8 +274,18 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8099)
     ap.add_argument("--seed", required=True)
+    ap.add_argument("--log", help="append one line per request: METHOD PATH (never the token)")
     a = ap.parse_args()
     with open(a.seed, encoding="utf-8") as f:
         fake = FakeTandoor(json.load(f))
+    if a.log:
+        handle = fake.handle
+
+        def logged(method, raw_path, headers, body):
+            with open(a.log, "a", encoding="utf-8") as log:
+                log.write(f"{method} {raw_path}\n")
+            return handle(method, raw_path, headers, body)
+
+        fake.handle = logged
     print(fake.start(a.port), flush=True)
     threading.Event().wait()
