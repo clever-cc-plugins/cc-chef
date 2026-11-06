@@ -9,7 +9,6 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `.claude/format-markdown.sh`                           | PostToolUse hook: formats Markdown files with prettier after edits                             |
 | `.claude/guard-secret-files.sh`                        | PreToolUse hook: blocks reads/edits/writes of secret .env files                                |
 | `.claude/settings.json`                                | Permissions, hooks, environment variables                                                      |
-| `.claudeignore`                                        | Paths excluded from Claude Code indexing                                                       |
 | `.githooks/pre-commit`                                 | Secret scanning (gitleaks) + CLAUDE.md table sync                                              |
 | `.github/workflows/claude-code-review.yml`             | Auto-runs Claude Code review on PRs from trusted authors (owner/member/collaborator)           |
 | `.github/workflows/claude.yml`                         | Runs Claude Code on `@claude` mentions in issues/PR comments/reviews, gated to trusted authors |
@@ -26,7 +25,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `plugins/cc-chef/skills/tandoor-food-cleanup/SKILL.md` | Merges duplicate Tandoor foods and units group by group after approval                         |
 | `scripts/sync-config-table.sh`                         | Keeps Key Config Files table in sync on each commit                                            |
 
-<!-- cc-config: last-optimize-run: 2026-11-05 a3bfe1c6ee6f5e035454806ca1b107c537aea9d8 -->
+<!-- cc-config: last-optimize-run: 2026-11-05 b39142efc5537fdca51e7e6bae4158d75d84f85a -->
 
 ## Commands
 
