@@ -46,7 +46,7 @@ Choose the path:
 python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" newpath "<save folder>" "<title>"
 ```
 
-`${CLAUDE_SKILL_DIR}` is the directory of this `SKILL.md`; if it stays literal or empty because another skill read this file instead of invoking it, use the directory of this file instead (the `_shared` folder is its sibling).
+`${CLAUDE_SKILL_DIR}` is the directory of this `SKILL.md`; if it stays literal or empty because another skill read this file instead of invoking it, use the directory of this file instead (the `_shared` folder is its sibling). Write the resulting absolute path into the command itself; never assign it to a shell variable first, because a command that starts with an assignment matches no permission rule and gets refused.
 
 It prints a collision-free path, for example `Rezepte/rinderrouladen.md`. Without python3, apply the slug rules from `recipe-format.md` by hand and check that the file does not exist; add `-2`, `-3` and so on if it does. Write the recipe with the Write tool in the fixed layout of `recipe-format.md`, whatever display layout the conversation used. Never overwrite an existing Markdown recipe file.
 
@@ -73,7 +73,7 @@ Run it for each file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. E
   python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/recipe_tool.py" paprika "<recipe.md>" ... -o "<archive.paprikarecipes>"
   ```
 
-- `tandoor`: upload through the script, in this order. The Markdown file from Steps 3 and 4 already exists. Keep the plan file in the system temp folder (for example `${TMPDIR:-/tmp}/cc-chef-plan-<stem>.json`), never in the save folder, and delete it when the run ends, whether the upload happened or not. `<tandoor>` below stands for `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py"`.
+- `tandoor`: upload through the script, in this order. The Markdown file from Steps 3 and 4 already exists. Keep the plan file in the system temp folder (for example `${TMPDIR:-/tmp}/cc-chef-plan-<stem>.json`), never in the save folder, and delete it when the run ends, whether the upload happened or not. `<tandoor>` below stands for `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py"`: write out the full command on every call, and never store it in a shell variable or put a variable assignment in front of it, because permission rules match a command by how it starts and would refuse it.
   1. `<tandoor> match "<recipe.md>" -o "<plan.json>"` reads the database and prints one `OPEN` line per ingredient that has no confident match (exact name or plural, or an existing alias).
   2. Show the open decisions in one list, in the user's language, with the suggested candidate per item (or "no similar entry"). Accept "use all suggestions" as an answer. For each item the user either picks an existing entry or agrees to create a new one; never decide for them.
   3. Run `<tandoor> resolve "<plan.json>" --kind food|unit|keyword --text "<text>" (--id <n> | --create)` once per answer.

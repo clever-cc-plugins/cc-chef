@@ -10,7 +10,7 @@ argument-hint: "[optional: food or unit to start with]"
 
 # Tandoor Food Cleanup
 
-This skill cleans up the food and unit database of the user's Tandoor instance: duplicates are merged into one kept entry, details that sit in a food name move into the notes of the recipe ingredients that use it, and an alias keeps future imports clean. It follows `../_shared/skill-contract.md` (language, address form, tone and the framing line included); the steps below are its own work. Everything shown to the user is in the output language. All Tandoor access goes through `tandoor.py`; never use `curl`, never read or print the token, never edit a plan file by hand. In the commands below, `<tandoor>` stands for `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py"`.
+This skill cleans up the food and unit database of the user's Tandoor instance: duplicates are merged into one kept entry, details that sit in a food name move into the notes of the recipe ingredients that use it, and an alias keeps future imports clean. It follows `../_shared/skill-contract.md` (language, address form, tone and the framing line included); the steps below are its own work. Everything shown to the user is in the output language. All Tandoor access goes through `tandoor.py`; never use `curl`, never read or print the token, never edit a plan file by hand. In the commands below, `<tandoor>` stands for `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py"`: write out the full command on every call, and never store it in a shell variable or put a variable assignment in front of it, because permission rules match a command by how it starts and would refuse it.
 
 ## Step 1: Check the connection
 
