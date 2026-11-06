@@ -3,7 +3,8 @@ name: create-recipe
 description: >
   Turn a mood, ingredients, a fridge photo or a dish name into one cookable
   everyday recipe. Invoke when the user says "what can I cook with this", "I need
-  to use up chicken and courgette" or "write me a recipe for goulash". Hands the
+  to use up chicken and courgette" or "write me a recipe for goulash" or "Was kann ich mit Reis und
+  Zucchini kochen?". Hands the
   result to export-recipe for saving. Do NOT use it to adapt an existing recipe
   (rework-recipe) or to save one (export-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch

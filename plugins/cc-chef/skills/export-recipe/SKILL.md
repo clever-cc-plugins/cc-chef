@@ -1,7 +1,7 @@
 ---
 name: export-recipe
 description: >
-  Save a recipe as Markdown and, if wanted, convert it to JSON-LD or Paprika or
+  Save a recipe as Markdown and, if wanted, convert it to JSON-LD or Paprika, or
   upload it to Tandoor. Invoke when the user says "save this recipe", "export as
   JSON-LD", "make a Paprika file" or "upload this to Tandoor". Takes a recipe from
   the conversation or saved files. Do NOT use it to make a new recipe

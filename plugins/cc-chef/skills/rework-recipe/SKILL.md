@@ -4,7 +4,7 @@ description: >
   Restructure an existing recipe (text, URL, photo, saved file or Tandoor recipe)
   to the user's house style, language and units, optionally adapted to a dietary
   guideline. Invoke when the user says "rework this recipe" or "convert this
-  recipe to grams". Flags every real change. Do NOT use it to create a new recipe
+  recipe to grams" or "Bau dieses Rezept um". Flags every real change. Do NOT use it to create a new recipe
   (create-recipe) or only to save one (export-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
 argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe file path]"
