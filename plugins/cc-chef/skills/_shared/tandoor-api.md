@@ -44,48 +44,48 @@ The plan is a JSON file the script writes and reads; skills never edit it by han
 
 ## 4. API facts the script relies on
 
-All `from source, 2026-11-05` (`TandoorRecipes/recipes`, branch `develop`, release 2.7.2).
+Source: `TandoorRecipes/recipes`, branch `develop`, release 2.7.2. The status column says what `tests/tandoor/live_smoke.py` and a live merge confirmed (`verified against 2.7.2, 2026-11-06`), what the live check corrected, and what is still `from source, 2026-11-05`.
 
 ### 4.1 Access
 
-| Fact                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------ |
-| Auth is `Authorization: Bearer <token>`; scopes are `read` and `write`                                             |
-| Paths need the trailing slash; without it the instance answers with the login page and status 200                  |
-| Schema: `GET /openapi/`. Version: `GET /api/server-settings/current/` (public, field `version`)                    |
-| Pagination: `page` and `page_size`, with `results` and `next`. Maximum `page_size` is 200 (100 for `/api/recipe/`) |
-| `next` can carry an internal host: the script counts pages and never follows it                                    |
+| Fact                                                                                                                 | Status                             |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Auth is `Authorization: Bearer <token>`; scopes are `read` and `write`                                               | verified against 2.7.2, 2026-11-06 |
+| Paths need the trailing slash; without it the instance answers with the login page and status 200                    | from source, 2026-11-05            |
+| Schema: `GET /openapi/` (add `?format=json`). Version: `GET /api/server-settings/current/` (public, field `version`) | verified against 2.7.2, 2026-11-06 |
+| Pagination: `page` and `page_size`, with `results` and `next`. Maximum `page_size` is 200 (100 for `/api/recipe/`)   | verified against 2.7.2, 2026-11-06 |
+| `next` can carry an internal host: the script counts pages and never follows it                                      | from source, 2026-11-05            |
 
 ### 4.2 Recipes
 
-| Fact                                                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/recipe/` takes nested `steps[].ingredients[]`                                                                                                            |
-| A nested `food` without `id` runs get-or-create on the exact name: this is the silent-duplicate path the script avoids                                              |
-| A nested `food` with `id` updates that food from the payload, so a wrong `name` renames it                                                                          |
-| `PATCH /api/recipe/<id>/` with `steps` removes steps left out and creates steps sent without `id`; `keywords` works the same way, so the script sends the full list |
-| Limits: recipe `name` 128, `description` 512, step `name` 128, food and unit `name` 128, ingredient `note` 256, `original_text` 512, `source_url` 1024              |
-| `Ingredient.amount` is one decimal, no ranges; `no_amount` marks "to taste"; `is_header` marks a heading row                                                        |
-| `Step` also has `step_recipe` (an embedded recipe) and `file`; replacing steps would drop both, so update mode refuses such recipes                                 |
+| Fact                                                                                                                                                                  | Status                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `POST /api/recipe/` takes nested `steps[].ingredients[]`; every ingredient needs the key `unit` (may be `null`)                                                       | verified against 2.7.2, 2026-11-06                                             |
+| A nested `food` without `id` runs get-or-create on the exact name: this is the silent-duplicate path the script avoids                                                | verified against 2.7.2, 2026-11-06                                             |
+| A nested `food` with `id` and the right `name` leaves the food unchanged (`plural_name`, `description`, `properties` checked). A wrong `name` renames it              | unchanged: verified against 2.7.2, 2026-11-06; rename: from source, 2026-11-05 |
+| `PATCH /api/recipe/<id>/` with `steps` replaces the steps and keeps `image`, `rating` and `private`; the replaced steps and ingredients do not stay behind as orphans | verified against 2.7.2, 2026-11-06                                             |
+| `PATCH` with `steps` creates steps sent without `id`; `keywords` works the same way, so the script sends the full list                                                | from source, 2026-11-05                                                        |
+| `PATCH /api/ingredient/<id>/` with only `note` changes only the note                                                                                                  | verified against 2.7.2, 2026-11-06                                             |
+| `rating` is read-only: it is computed from `/api/cook-log/` entries                                                                                                   | verified against 2.7.2, 2026-11-06                                             |
+| `GET /api/recipe/?query=<title>` finds recipes by name                                                                                                                | verified against 2.7.2, 2026-11-06                                             |
+| Limits: recipe `name` 128, `description` 512, step `name` 128, food and unit `name` 128, ingredient `note` 256, `original_text` 512, `source_url` 1024                | from source, 2026-11-05                                                        |
+| `Ingredient.amount` is one decimal, no ranges; `no_amount` marks "to taste"; `is_header` marks a heading row                                                          | from source, 2026-11-05                                                        |
+| `Step` also has `step_recipe` (an embedded recipe) and `file`; replacing steps would drop both, so update mode refuses such recipes                                   | from source, 2026-11-05                                                        |
 
 ### 4.3 Foods, units and merges
 
-| Fact                                                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Food and unit names are unique per space; matching in `create` is case-sensitive                                                                                    |
-| `?extended=1` adds `numrecipe`. Foods have `parent`, `properties`, `plural_name`, `open_data_slug`                                                                  |
-| `GET /api/ingredient/?food=<id>&simple=1` leaves out ingredients of other users' private recipes and those in orphaned steps; the merge still moves them            |
-| `PUT /api/<food\|unit>/<id>/merge/<target>/` re-points relations and deletes the source, plus its properties and conversions; merging into a descendant returns 403 |
-| `Automation` types `FOOD_ALIAS`, `UNIT_ALIAS`, `KEYWORD_ALIAS` use `param_1` (alias, compared lowercased) and `param_2` (target name)                               |
-| Aliases run in importers and the ingredient parser, not on `POST /api/recipe/`, so the script applies them itself when matching                                     |
-
-### 4.4 Assumptions that still need a live check
-
-| Assumption                                                                                | Used by                                              |
-| ----------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Each row of `GET /api/ingredient/` lists its recipes in `used_in_recipes` as `{id, name}` | `group-plan` previews and the hidden-recipes warning |
-| `GET /api/<food\|unit>/<id>/?extended=1` returns `numrecipe` for a single entry           | `group-plan`                                         |
-| `GET /api/recipe/?query=<title>` finds recipes by name                                    | `match`, `recipes`                                   |
+| Fact                                                                                                                                                                                                                                                         | Status                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Food and unit names are unique per space; matching in `create` is case-sensitive                                                                                                                                                                             | from source, 2026-11-05                                                        |
+| `numrecipe` comes only from a single entry with `?extended=1` (`GET /api/<food\|unit>/<id>/?extended=1`). The lists `/api/food/` and `/api/unit/` never carry it, with or without `extended`: the script asks for the members of duplicate groups one by one | verified against 2.7.2, 2026-11-06                                             |
+| Foods have `parent`, `properties`, `plural_name`, `open_data_slug`. A nested `property_type` in `properties` needs its `name`                                                                                                                                | verified against 2.7.2, 2026-11-06                                             |
+| `GET /api/ingredient/?food=<id>` lists `used_in_recipes` as `[{id, name}]` per row. With `simple=1` the field is missing, so the script does not use `simple`                                                                                                | verified against 2.7.2, 2026-11-06                                             |
+| Whether the ingredient list leaves out other users' private recipes cannot be checked with a single user; the script treats a gap between `numrecipe` and the recipes reached as hidden recipes                                                              | from source, 2026-11-05                                                        |
+| `PUT /api/<food\|unit>/<id>/merge/<target>/` re-points relations, deletes the source and its properties, and leaves the kept food unchanged. Notes moved first stay on the ingredients                                                                       | verified against 2.7.2, 2026-11-06                                             |
+| Deleting a food on its own leaves its `Property` rows behind, and `DELETE /api/property-type/<id>/` answers 500 while rows still use the type: remove the rows first                                                                                         | verified against 2.7.2, 2026-11-06                                             |
+| A food merge also deletes the source's unit conversions; merging into a descendant returns 403                                                                                                                                                               | from source, 2026-11-05                                                        |
+| `Automation` types `FOOD_ALIAS`, `UNIT_ALIAS`, `KEYWORD_ALIAS` use `param_1` (alias, compared lowercased) and `param_2` (target name). The merge adds the alias                                                                                              | created: verified against 2.7.2, 2026-11-06; matching: from source, 2026-11-05 |
+| Aliases run in importers and the ingredient parser, not on `POST /api/recipe/`, so the script applies them itself when matching                                                                                                                              | from source, 2026-11-05                                                        |
 
 ## 5. What Tandoor cannot hold, and where it goes
 
