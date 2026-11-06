@@ -93,6 +93,8 @@ class Client:
         if status == 403:
             hint = "the token needs the write scope" if method != "GET" else "the token lacks permission"
             return self._fail(f"forbidden (403): {hint}", status)
+        if status == 404:
+            return self._fail("not found (404): there is no such entry on this instance", status)
         detail = e.read().decode("utf-8", "replace")[:300]
         return self._fail(f"{method} failed ({status}): {detail}", status)
 

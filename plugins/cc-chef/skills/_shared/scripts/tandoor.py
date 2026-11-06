@@ -17,6 +17,7 @@ import tandoor_client as tc
 import tandoor_match as tmatch
 import tandoor_model as tm
 
+UPDATE_FIELDS = ("name", "description", "servings", "servings_text", "working_time", "waiting_time", "source_url", "keywords", "steps")
 KINDS = ("food", "unit", "keyword")
 ALIAS_TYPES = {"food": "FOOD_ALIAS", "unit": "UNIT_ALIAS", "keyword": "KEYWORD_ALIAS"}
 
@@ -86,11 +87,23 @@ def _cmd_match(args: argparse.Namespace) -> int:
     client = tc.Client(tc.load_config())
     payload = tm.to_payload(recipe)
     automations = [a for a in client.list_all("api/automation/") if not a.get("disabled")]
+    problems = tm.limit_problems(payload)
+    tandoor_id, live = recipe.meta.get("tandoor-id"), None
+    if tandoor_id not in (None, ""):
+        if not isinstance(tandoor_id, int):
+            print(f"{args.recipe}: tandoor-id must be a number", file=sys.stderr)
+            return 1
+        live = client.get(f"api/recipe/{tandoor_id}/")
+        problems += tm.update_problems(live, recipe.meta.get("tandoor-updated-at"))
+        kept = [k["name"] for k in live.get("keywords", [])] + [k["text"] for k in payload["keywords"]]
+        payload["keywords"] = [{"text": t} for t in {tm.normalize(t): t for t in reversed(kept)}.values()][::-1]
     plan = {
-        "version": 1, "mode": "create", "source": str(args.recipe), "base_url": client.config.url,
-        "tandoor_id": None, "updated_at": None, "payload": payload,
-        "foods": {}, "units": {}, "keywords": {}, "existing": [], "problems": tm.limit_problems(payload),
+        "version": 1, "mode": "update" if live else "create", "source": str(args.recipe), "base_url": client.config.url,
+        "tandoor_id": tandoor_id if live else None, "updated_at": live["updated_at"] if live else None,
+        "payload": payload, "foods": {}, "units": {}, "keywords": {}, "existing": [], "problems": problems,
     }
+    if live:
+        plan["current"] = {"name": live["name"], "steps": len(live.get("steps", []))}
     for kind, texts in _texts(payload).items():
         index = tmatch.build_index(
             client.list_all(f"api/{kind}/"), [a for a in automations if a.get("type") == ALIAS_TYPES[kind]]
@@ -100,8 +113,9 @@ def _cmd_match(args: argparse.Namespace) -> int:
             confident = m["status"] in ("exact", "alias")
             m["decision"] = "use" if confident else ("create" if kind == "keyword" else None)
             plan[kind + "s"][key] = m
-    found = client.get("api/recipe/", {"query": recipe.title, "page_size": 100})["results"]
-    plan["existing"] = [{"id": r["id"], "name": r["name"]} for r in found if tm.normalize(r["name"]) == tm.normalize(recipe.title)]
+    if not live:
+        found = client.get("api/recipe/", {"query": recipe.title, "page_size": 100})["results"]
+        plan["existing"] = [{"id": r["id"], "name": r["name"]} for r in found if tm.normalize(r["name"]) == tm.normalize(recipe.title)]
     _save(args.output, plan)
     for kind, e in _open_items(plan):
         print(_open_line(kind, e))
@@ -122,6 +136,35 @@ def _cmd_resolve(args: argparse.Namespace) -> int:
         entry.update(decision="use", id=target["id"], name=target["name"])
     _save(args.plan, plan)
     print(f"{args.kind} '{entry['text']}': {entry['decision']}" + (f" {entry['name']} (id {entry['id']})" if entry["id"] else ""))
+    return 0
+
+
+def _cmd_recipes(args: argparse.Namespace) -> int:
+    client = tc.Client(tc.load_config())
+    params = {"page_size": min(args.limit, 100)}
+    if args.query:
+        params["query"] = args.query
+    for r in client.get("api/recipe/", params)["results"][: args.limit]:
+        marked = any(tm.normalize(k["name"]) == tm.MARKER for k in r.get("keywords", []))
+        print(f"{r['id']}  {r['name']}" + (f"  [{tm.MARKER}]" if marked else ""))
+    return 0
+
+
+def _cmd_pull(args: argparse.Namespace) -> int:
+    try:
+        recipe = tc.Client(tc.load_config()).get(f"api/recipe/{args.id}/")
+    except tc.TandoorError as e:
+        if e.status == 404:
+            e = tc.TandoorError(f"there is no recipe with id {args.id} on this instance", 404)
+        raise e from None
+    try:
+        Path(args.output).write_text(json.dumps(recipe, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    except OSError as e:
+        print(f"{args.output}: {e.strerror or e}", file=sys.stderr)
+        return 1
+    print(tm.render_source(recipe))
+    print(f"tandoor-id: {recipe['id']}")
+    print(f"tandoor-updated-at: {recipe['updated_at']}")
     return 0
 
 
@@ -155,6 +198,11 @@ def _cmd_preview(args: argparse.Namespace) -> int:
             print(f"PROBLEM: {problem}")
         print("Resolve these first; no confirmation code is given while anything is open.")
         return 1
+    if plan["mode"] == "update":
+        print(f"Update in place: recipe {plan['tandoor_id']} ({plan['current']['name']}) is replaced by the version below.")
+        print(f"Steps: {plan['current']['steps']} before, {len(plan['payload']['steps'])} after. Image, rating and sharing stay as they are.")
+        print(f"The replaced steps cannot be restored. For a backup run: tandoor.py pull {plan['tandoor_id']} -o <file>")
+        print()
     print(tm.render_source(_finalize(plan)))
     new = [(kind, e["text"]) for kind in KINDS for _, e in _entries(plan, kind) if e["decision"] == "create"]
     print("New database entries (will be created):" if new else "New database entries: none")
@@ -185,6 +233,10 @@ def _cmd_upload(args: argparse.Namespace) -> int:
         print("a recipe with this name already exists: use --allow-duplicate or update the existing recipe", file=sys.stderr)
         return 1
     client = tc.Client(cfg)
+    updating = plan["mode"] == "update"
+    if updating and client.get(f"api/recipe/{plan['tandoor_id']}/").get("updated_at") != plan["updated_at"]:
+        print("the recipe was edited in Tandoor after the plan was made: run match again", file=sys.stderr)
+        return 1
     created: dict[str, dict] = {k: {} for k in KINDS}
     try:
         for kind in KINDS:
@@ -193,7 +245,11 @@ def _cmd_upload(args: argparse.Namespace) -> int:
                     obj = client.post(f"api/{kind}/", {"name": e["text"]})
                     created[kind][key] = {"id": obj["id"], "name": obj["name"]}
         body = _finalize(plan, created)
-        recipe = client.post("api/recipe/", body)
+        if updating:
+            recipe = client.patch(f"api/recipe/{plan['tandoor_id']}/", {k: body[k] for k in UPDATE_FIELDS})
+            recipe["id"] = plan["tandoor_id"]
+        else:
+            recipe = client.post("api/recipe/", body)
         stored = client.get(f"api/recipe/{recipe['id']}/")
     except tc.TandoorError as e:
         print(f"upload failed: {e}", file=sys.stderr)
@@ -201,7 +257,7 @@ def _cmd_upload(args: argparse.Namespace) -> int:
         if made:
             print("Already created: " + ", ".join(made) + ". A new match finds them as exact.", file=sys.stderr)
         return 1
-    print(f"Created: {recipe['id']} {cfg.url}/recipe/{recipe['id']}/")
+    print(f"{'Updated' if updating else 'Created'}: {recipe['id']} {cfg.url}/recipe/{recipe['id']}/")
     diffs = tm.read_back_diff(body, stored)
     for d in diffs:
         print(f"Difference after read-back: {d}", file=sys.stderr)
@@ -233,6 +289,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--confirm")
     p.add_argument("--allow-duplicate", action="store_true")
     p.set_defaults(func=_cmd_upload)
+    p = sub.add_parser("recipes", help="list recipes; shows which carry the cc-chef marker")
+    p.add_argument("--query")
+    p.add_argument("--limit", type=int, default=25)
+    p.set_defaults(func=_cmd_recipes)
+    p = sub.add_parser("pull", help="save a recipe as raw JSON backup and print it as text")
+    p.add_argument("id", type=int)
+    p.add_argument("-o", "--output", required=True)
+    p.set_defaults(func=_cmd_pull)
     args = parser.parse_args(argv)
     try:
         return args.func(args)

@@ -108,6 +108,8 @@ class FakeTandoor:
             return 404, "application/json", {"detail": "Not found."}, {}
         if method == "GET":
             return 200, "application/json", found, {}
+        if method == "PATCH" and coll == "recipe":
+            return self.patch_recipe(found, body)
         return 405, "application/json", {"detail": "Method not allowed."}, {}
 
     def list_items(self, coll, items, query):
@@ -181,6 +183,19 @@ class FakeTandoor:
             self.recipe_mutator(rec)
         self.db["recipe"].append(rec)
         return 201, "application/json", rec, {}
+
+    def patch_recipe(self, found, body):
+        for key, value in body.items():
+            if key == "steps":  # steps left out are removed, steps without id are created
+                found["steps"] = self.store_steps(value)
+            elif key == "keywords":
+                found["keywords"] = [self.resolve_ref("keyword", k) for k in value]
+            else:
+                found[key] = value
+        found["updated_at"] = self.now()
+        if self.recipe_mutator:
+            self.recipe_mutator(found)
+        return 200, "application/json", found, {}
 
 
 if __name__ == "__main__":

@@ -191,6 +191,21 @@ def render_source(recipe: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def update_problems(live: dict, pulled_at) -> list[str]:
+    """Reasons an in-place update must not go ahead on this live recipe."""
+    problems = []
+    if live.get("updated_at") != pulled_at:
+        problems.append(
+            f"the recipe was edited in Tandoor since the pull (now {live.get('updated_at')}, file says {pulled_at}): pull it again"
+        )
+    for n, step in enumerate(live.get("steps", []), 1):
+        if step.get("step_recipe"):
+            problems.append(f"step {n} embeds another recipe, which replacing the steps would drop: edit this recipe in Tandoor")
+        if step.get("file"):
+            problems.append(f"step {n} has an attached file, which replacing the steps would drop: edit this recipe in Tandoor")
+    return problems
+
+
 def read_back_diff(sent: dict, got: dict) -> list[str]:
     diffs: list[str] = []
     s_steps, g_steps = sent.get("steps", []), got.get("steps", [])
