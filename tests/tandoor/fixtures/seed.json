@@ -1,0 +1,19 @@
+{
+  "version": "2.7.2",
+  "food": [
+    {"id": 7, "name": "Zwiebel", "plural_name": "Zwiebeln", "properties": [{"id": 1}], "open_data_slug": "onion"},
+    {"id": 8, "name": "Passierte Tomaten", "plural_name": null, "properties": []},
+    {"id": 9, "name": "Mehl", "plural_name": null, "properties": []},
+    {"id": 10, "name": "Salz", "plural_name": null, "properties": []}
+  ],
+  "unit": [
+    {"id": 1, "name": "g", "plural_name": null},
+    {"id": 2, "name": "EL", "plural_name": null},
+    {"id": 3, "name": "ml", "plural_name": null}
+  ],
+  "keyword": [],
+  "automation": [
+    {"id": 1, "type": "FOOD_ALIAS", "name": "alias", "param_1": "Tomaten, passiert", "param_2": "Passierte Tomaten", "disabled": false}
+  ],
+  "recipe": []
+}
