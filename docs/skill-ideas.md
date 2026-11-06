@@ -8,6 +8,7 @@ Captured during brainstorming on 2026-11-01. This is not a design. The plugin de
 - Done: plugin design, approved by the owner on 2026-11-02: [docs/superpowers/specs/2026-11-02-cc-chef-design.md](superpowers/specs/2026-11-02-cc-chef-design.md). It supersedes this note wherever they differ.
 - Next: implementation plan (superpowers:writing-plans), then build per the [cc-plugin-repo-guideline](https://github.com/clever-cc-plugins/marketplace/blob/main/docs/cc-plugin-repo-guideline.md).
 - 2026-11-04: phase 1 built on `feat/phase-1-core` (six skills, knowledge base, recipe format, `recipe_tool.py`); next is the phase 2 plan for Tandoor.
+- 2026-11-06: phase 2 (Tandoor) built on `feat/phase-2-tandoor`: upload, in-place rework and `tandoor-food-cleanup`, tested against a fake server; the live-instance check with the owner is still open.
 
 ## Intent
 

@@ -17,14 +17,15 @@ A [Claude Code](https://claude.ai/code) plugin to create, adapt, rework and expo
 
 Every skill works without any setup and uses sensible defaults. If you run onboarding, your preferences, household and allergies shape every recipe. Allergens and life-stage safety rules are hard constraints that are never relaxed for flavour.
 
-| Skill                         | What it does                                                                                                     |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `/cc-chef:chef-onboarding`    | Sets up your cooking preferences: language, units, region, household, equipment, tastes and recipe save folder   |
-| `/cc-chef:create-recipe`      | Turns a mood, ingredients, a fridge photo or a dish name into recipe ideas and then one full, cookable recipe    |
-| `/cc-chef:rework-recipe`      | Restructures an existing recipe (text, URL, photo or saved file) to your preferences and, optionally, guidelines |
-| `/cc-chef:dietary-guidelines` | Opt-in: writes a personal dietary guideline per household member that the other skills apply                     |
-| `/cc-chef:research-prompt`    | Builds a ready-to-paste deep-research prompt about a diet, intolerance or food practice                          |
-| `/cc-chef:export-recipe`      | Saves recipes as Markdown and converts them to JSON-LD or a Paprika archive                                      |
+| Skill                           | What it does                                                                                                                     |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `/cc-chef:chef-onboarding`      | Sets up your cooking preferences: language, units, region, household, equipment, tastes and recipe save folder                   |
+| `/cc-chef:create-recipe`        | Turns a mood, ingredients, a fridge photo or a dish name into recipe ideas and then one full, cookable recipe                    |
+| `/cc-chef:rework-recipe`        | Restructures an existing recipe (text, URL, photo, saved file or Tandoor recipe) to your preferences and, optionally, guidelines |
+| `/cc-chef:dietary-guidelines`   | Opt-in: writes a personal dietary guideline per household member that the other skills apply                                     |
+| `/cc-chef:research-prompt`      | Builds a ready-to-paste deep-research prompt about a diet, intolerance or food practice                                          |
+| `/cc-chef:export-recipe`        | Saves recipes as Markdown and converts them to JSON-LD or a Paprika archive, or uploads them to Tandoor                          |
+| `/cc-chef:tandoor-food-cleanup` | Merges duplicate foods and units in your Tandoor instance, group by group, after you approve each one                            |
 
 ---
 
@@ -94,7 +95,21 @@ Recipes are saved as Markdown files in a save folder of your choice, in one fixe
 
 Python 3 is needed for validation and conversion, not for saving.
 
-Tandoor support: coming in phase 2.
+### Tandoor
+
+If you run [Tandoor](https://tandoor.dev), cc-chef can work with it directly, and only when you have configured an instance. Everyone else keeps using files.
+
+- **Upload:** `export-recipe` sends a recipe with its steps and the ingredients attached to the steps that use them. Every ingredient is matched to your food and unit database (including your existing aliases); anything without a confident match is put to you, and a close match is only ever a suggestion. You see a preview and approve it before anything is written. The Markdown file is always saved first.
+- **Rework in place:** `rework-recipe` can take a recipe from your instance, restructure it and update it in place after a preview. Processed recipes get a `cc-chef` keyword, and existing keywords are kept.
+- **Food cleanup:** `tandoor-food-cleanup` finds duplicate and polluted foods and units and merges them group by group. Details in a food name move into the notes of the ingredients first, and merges cannot be undone, so make a backup of the instance before the first run.
+
+Setup, once:
+
+1. In Tandoor, create an API token with the `read` and `write` scopes.
+2. Set `TANDOOR_URL` (the address of your instance) and `TANDOOR_TOKEN` in the shell that starts Claude Code, for example from a keychain-backed shell function, and restart Claude Code. Do not put the token into a project file or paste it into the chat.
+3. Run `/cc-chef:chef-onboarding` and pick `tandoor` as the recipe target, or ask `export-recipe` for Tandoor directly. It checks the connection first.
+
+Python 3 is needed; the script uses only its standard library, so there is nothing to install.
 
 ---
 

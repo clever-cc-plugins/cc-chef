@@ -20,10 +20,10 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `plugins/cc-chef/skills/chef-onboarding/SKILL.md`      | Sets up cooking preferences, save folder and one-time disclaimer                               |
 | `plugins/cc-chef/skills/create-recipe/SKILL.md`        | Turns a mood, ingredients, photo or dish name into a cookable recipe                           |
 | `plugins/cc-chef/skills/dietary-guidelines/SKILL.md`   | Opt-in personal dietary guideline per household member                                         |
-| `plugins/cc-chef/skills/export-recipe/SKILL.md`        | Saves recipes as Markdown; converts to JSON-LD or Paprika                                      |
+| `plugins/cc-chef/skills/export-recipe/SKILL.md`        | Saves recipes as Markdown; converts to JSON-LD or Paprika; uploads to Tandoor                  |
 | `plugins/cc-chef/skills/research-prompt/SKILL.md`      | Builds a deep-research prompt for a diet or food constraint                                    |
 | `plugins/cc-chef/skills/rework-recipe/SKILL.md`        | Restructures an existing recipe to the user's preferences                                      |
-| `plugins/cc-chef/skills/tandoor-food-cleanup/SKILL.md` | TODO: add description                                                                          |
+| `plugins/cc-chef/skills/tandoor-food-cleanup/SKILL.md` | Merges duplicate Tandoor foods and units group by group after approval                         |
 | `scripts/sync-config-table.sh`                         | Keeps Key Config Files table in sync on each commit                                            |
 
 <!-- cc-config: last-optimize-run: 2026-11-05 a3bfe1c6ee6f5e035454806ca1b107c537aea9d8 -->
@@ -31,6 +31,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 ## Commands
 
 - Test the recipe tool: `python3 -m unittest discover -s tests/recipe-tool -v`
+- Test the Tandoor scripts (fake server, no real instance): `python3 -m unittest discover -s tests/tandoor -v`
 
 ## Don't
 
