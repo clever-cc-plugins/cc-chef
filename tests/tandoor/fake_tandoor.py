@@ -26,6 +26,8 @@ class FakeTandoor:
         self.redirect_to: str | None = None  # every request answers 301 to this URL
         self.html_everywhere = False  # every path answers 200 text/html
         self.canned: list[tuple[str, str, int, object]] = []  # (method, path substring, status, body), used once
+        self.recipe_mutator = None  # callable(recipe) run on every stored recipe, to simulate a lossy server
+        self._tick = 0
         self._lock = threading.Lock()
         self._server: ThreadingHTTPServer | None = None
 
@@ -100,7 +102,7 @@ class FakeTandoor:
         if item_id is None and method == "GET":
             return self.list_items(coll, items, query)
         if item_id is None and method == "POST":
-            return self.create(coll, body)
+            return self.create_recipe(body) if coll == "recipe" else self.create(coll, body)
         found = next((i for i in items if i["id"] == int(item_id or 0)), None)
         if found is None:
             return 404, "application/json", {"detail": "Not found."}, {}
@@ -109,6 +111,8 @@ class FakeTandoor:
         return 405, "application/json", {"detail": "Method not allowed."}, {}
 
     def list_items(self, coll, items, query):
+        if query.get("query"):
+            items = [i for i in items if query["query"].casefold() in i.get("name", "").casefold()]
         cap = 100 if coll == "recipe" else 200
         size = min(int(query.get("page_size", 50)), cap)
         page = int(query.get("page", 1))
@@ -126,6 +130,57 @@ class FakeTandoor:
         new = {**body, "id": max((i["id"] for i in items), default=0) + 1}
         items.append(new)
         return 201, "application/json", new, {}
+
+    # -- recipes: nested writes like drf-writable-nested ---------------------
+    def next_id(self, coll):
+        return max((i["id"] for i in self.db[coll]), default=0) + 1
+
+    def now(self):
+        self._tick += 1
+        return f"2026-11-05T10:00:00.{self._tick:06d}Z"
+
+    def resolve_ref(self, coll, ref):
+        """A nested object without id is get_or_create on the exact name; with id it updates that object from the payload."""
+        items = self.db[coll]
+        if ref.get("id") is not None:
+            found = next((i for i in items if i["id"] == ref["id"]), None)
+            if found is None:
+                raise KeyError(f"{coll} {ref['id']}")
+            if ref.get("name"):
+                found["name"] = ref["name"]
+            return {"id": found["id"], "name": found["name"]}
+        found = next((i for i in items if i["name"] == ref.get("name")), None)
+        if found is None:
+            found = {"id": self.next_id(coll), "name": ref.get("name")}
+            items.append(found)
+        return {"id": found["id"], "name": found["name"]}
+
+    def store_steps(self, steps):
+        out, ing_id = [], max((i["id"] for r in self.db["recipe"] for s in r["steps"] for i in s["ingredients"]), default=0)
+        step_id = max((s["id"] for r in self.db["recipe"] for s in r["steps"]), default=0)
+        for step in steps:
+            step_id += 1
+            new = {**step, "id": step.get("id") or step_id, "ingredients": []}
+            for ing in step.get("ingredients", []):
+                ing_id += 1
+                new["ingredients"].append({
+                    **ing,
+                    "id": ing.get("id") or ing_id,
+                    "food": self.resolve_ref("food", ing["food"]),
+                    "unit": self.resolve_ref("unit", ing["unit"]) if ing.get("unit") else None,
+                })
+            out.append(new)
+        return out
+
+    def create_recipe(self, body):
+        rec = {**body, "id": self.next_id("recipe"), "created_at": self.now()}
+        rec["updated_at"] = rec["created_at"]
+        rec["steps"] = self.store_steps(body.get("steps", []))
+        rec["keywords"] = [self.resolve_ref("keyword", k) for k in body.get("keywords", [])]
+        if self.recipe_mutator:
+            self.recipe_mutator(rec)
+        self.db["recipe"].append(rec)
+        return 201, "application/json", rec, {}
 
 
 if __name__ == "__main__":

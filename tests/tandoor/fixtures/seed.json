@@ -13,7 +13,7 @@
   ],
   "keyword": [],
   "automation": [
-    {"id": 1, "type": "FOOD_ALIAS", "name": "alias", "param_1": "Tomaten, passiert", "param_2": "Passierte Tomaten", "disabled": false}
+    {"id": 1, "type": "FOOD_ALIAS", "name": "alias", "param_1": "Passata", "param_2": "Passierte Tomaten", "disabled": false}
   ],
   "recipe": []
 }
