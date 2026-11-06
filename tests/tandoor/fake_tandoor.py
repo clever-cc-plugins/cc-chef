@@ -112,7 +112,7 @@ class FakeTandoor:
         if found is None:
             return 404, "application/json", {"detail": "Not found."}, {}
         if method == "GET":
-            return 200, "application/json", self.extend(coll, found, query), {}
+            return 200, "application/json", self.extend(coll, found, query, single=True), {}
         if method == "PATCH" and coll == "recipe":
             return self.patch_recipe(found, body)
         if method == "PATCH":
@@ -143,10 +143,14 @@ class FakeTandoor:
         return 201, "application/json", new, {}
 
     # -- recipes: nested writes like drf-writable-nested ---------------------
-    def extend(self, coll, item, query):
-        if query.get("extended") == "1" and coll in ("food", "unit"):
-            return {**item, "numrecipe": item.get("numrecipe", self.recipes_using(coll, item["id"]))}
-        return item
+    def extend(self, coll, item, query, single=False):
+        # Tandoor 2.7.2 (checked live): `numrecipe` only on a single entry with ?extended=1, never in a list
+        if coll not in ("food", "unit"):
+            return item
+        out = {k: v for k, v in item.items() if k != "numrecipe"}
+        if single and query.get("extended") == "1":
+            out["numrecipe"] = item.get("numrecipe", self.recipes_using(coll, item["id"]))
+        return out
 
     def all_ingredients(self):
         for recipe in self.db["recipe"]:
@@ -160,9 +164,10 @@ class FakeTandoor:
             for recipe, ing in self.all_ingredients():
                 if query.get("food") and str((ing.get("food") or {}).get("id")) != query["food"]:
                     continue
-                if query.get("simple") == "1" and recipe.get("hidden"):
-                    continue  # other users' private recipes
-                rows.append({**ing, "used_in_recipes": [{"id": recipe["id"], "name": recipe["name"]}]})
+                if recipe.get("hidden"):
+                    continue  # other users' private recipes (not verifiable live with a single user)
+                # Tandoor 2.7.2 (checked live): `used_in_recipes` is missing from the rows when ?simple=1
+                rows.append(ing if query.get("simple") == "1" else {**ing, "used_in_recipes": [{"id": recipe["id"], "name": recipe["name"]}]})
             return self.list_items("ingredient", rows, query)
         found = next((i for _, i in self.all_ingredients() if i["id"] == int(item_id or 0)), None)
         if found is None:

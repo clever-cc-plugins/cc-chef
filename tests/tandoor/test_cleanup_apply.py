@@ -145,6 +145,14 @@ class ApplyTests(FakeCase):
         self.assertIn("2", warning)
         self.assertNotIn(731, [o.get("ingredient") for o in plan["ops"]])
 
+    def test_preview_names_the_recipes_and_does_not_warn_without_cause(self):
+        # Tandoor drops used_in_recipes from the rows with ?simple=1, which once made every food look partly hidden
+        self.make_plan()
+        _, text = self.confirm()
+        self.assertIn("Suppe", text)
+        self.assertNotIn("unknown", text)
+        self.assertNotIn("this token reaches", text)
+
     def test_alias_created_once(self):
         self.make_plan()
         self.assertEqual(self.apply().returncode, 0)
@@ -153,6 +161,20 @@ class ApplyTests(FakeCase):
         self.fake.db["food"].append({"id": 2, "name": "Zwiebel, gehackt", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None})
         plan = self.make_plan()
         self.assertNotIn("alias", [o["op"] for o in plan["ops"]])
+
+    def test_alias_from_a_merge_resolves_in_the_next_match(self):
+        # the live check could not show this: the parser splits ", gehackt" off, so only a plain synonym needs the alias
+        self.fake.db["food"] += [
+            {"id": 6, "name": "Passata", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None},
+            {"id": 7, "name": "Tomatenpassata", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None},
+        ]
+        self.make_plan(keep="6", merge="7")
+        self.assertEqual(self.apply().returncode, 0)
+        self.assertNotIn(7, [f["id"] for f in self.fake.db["food"]])
+        self.recipe.write_text(self.recipe.read_text(encoding="utf-8").replace("Passata", "Tomatenpassata"), encoding="utf-8")
+        self.match()
+        entry = self.plan()["foods"]["tomatenpassata"]
+        self.assertEqual((entry["status"], entry["decision"], entry["id"], entry["name"]), ("alias", "use", 6, "Passata"))
 
     def test_stale_alias_repointed(self):
         self.fake.db["automation"] = [{"id": 9, "type": "FOOD_ALIAS", "name": "a", "param_1": "Zwiebelwürfel", "param_2": "Zwiebel, gehackt", "disabled": False}]

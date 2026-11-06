@@ -8,14 +8,14 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `.claude/format-markdown.sh`                           | PostToolUse hook: formats Markdown files with prettier after edits                             |
 | `.claude/guard-secret-files.sh`                        | PreToolUse hook: blocks reads/edits/writes of secret .env files                                |
-| `.claudeignore`                                        | Paths excluded from Claude Code indexing                                                       |
-| `CLAUDE.md`                                            | Project instructions, loaded every message                                                     |
 | `.claude/settings.json`                                | Permissions, hooks, environment variables                                                      |
+| `.claudeignore`                                        | Paths excluded from Claude Code indexing                                                       |
 | `.githooks/pre-commit`                                 | Secret scanning (gitleaks) + CLAUDE.md table sync                                              |
 | `.github/workflows/claude-code-review.yml`             | Auto-runs Claude Code review on PRs from trusted authors (owner/member/collaborator)           |
 | `.github/workflows/claude.yml`                         | Runs Claude Code on `@claude` mentions in issues/PR comments/reviews, gated to trusted authors |
 | `.github/workflows/release.yml`                        | Triggers the shared `clever-cc-plugins/.github` release workflow on push to `main`             |
 | `.gitignore`                                           | Git ignore patterns                                                                            |
+| `CLAUDE.md`                                            | Project instructions, loaded every message                                                     |
 | `plugins/cc-chef/.claude-plugin/plugin.json`           | Plugin manifest                                                                                |
 | `plugins/cc-chef/skills/chef-onboarding/SKILL.md`      | Sets up cooking preferences, save folder and one-time disclaimer                               |
 | `plugins/cc-chef/skills/create-recipe/SKILL.md`        | Turns a mood, ingredients, photo or dish name into a cookable recipe                           |

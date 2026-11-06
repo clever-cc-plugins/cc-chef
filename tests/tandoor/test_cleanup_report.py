@@ -85,6 +85,17 @@ class ReportTests(FakeCase):
         self.assertEqual(groups[0]["confidence"], "maybe")
         self.assertIn("keep", groups[1])
 
+    def test_report_counts_recipes_per_member_because_lists_omit_them(self):
+        self.fake.db["food"] += [food(6, "Salz", n=1), food(7, "salz", n=8)]
+        self.run_cli("foods-report", "-o", self.report)
+        data = json.loads(self.report.read_text(encoding="utf-8"))
+        self.assertNotIn("numrecipe", next(f for f in data["foods"] if f["id"] == 5))  # like the real list: only group members are counted
+        salz = next(g for g in data["groups"] if {m["id"] for m in g["members"]} == {6, 7})
+        self.assertEqual({m["id"]: m["numrecipe"] for m in salz["members"]}, {6: 1, 7: 8})
+        self.assertEqual(salz["keep"], 7)  # the more used entry wins the tie-break
+        self.assertEqual(data["groups"][0]["id"], "f1")
+        self.assertEqual({m["id"] for m in data["groups"][0]["members"]}, {3, 4})  # 10 recipes, still first
+
 
 if __name__ == "__main__":
     unittest.main()

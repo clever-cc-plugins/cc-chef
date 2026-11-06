@@ -171,8 +171,8 @@ def _cmd_pull(args: argparse.Namespace) -> int:
 
 def _cmd_foods_report(args: argparse.Namespace) -> int:
     client = tc.Client(tc.load_config())
-    foods = client.list_all("api/food/", {"extended": 1})
-    units = client.list_all("api/unit/", {"extended": 1})
+    foods = client.list_all("api/food/")
+    units = client.list_all("api/unit/")
     conversions = client.list_all("api/unit-conversion/")
     aliases = [
         a for a in client.list_all("api/automation/")
@@ -181,10 +181,15 @@ def _cmd_foods_report(args: argparse.Namespace) -> int:
     unit_names = {u["name"] for u in units} | {u["plural_name"] for u in units if u.get("plural_name")}
     groups: list[dict] = []
     for kind, entries in (("food", foods), ("unit", units)):
-        found = sorted(
-            tcl.duplicate_groups(entries, unit_names, kind),
-            key=lambda g: (-sum(m.get("numrecipe") or 0 for m in g["members"]), g["key"]),
-        )
+        found = tcl.duplicate_groups(entries, unit_names, kind)
+        counts: dict[int, int] = {}  # lists never carry `numrecipe`: ask for the members of groups only
+        for g in found:
+            for m in g["members"]:
+                if m["id"] not in counts:
+                    counts[m["id"]] = (_live_entry(client, kind, m["id"]) or {}).get("numrecipe") or 0
+                m["numrecipe"] = counts[m["id"]]
+            g["keep"] = tcl.suggest_keep(g["members"])
+        found.sort(key=lambda g: (-sum(m["numrecipe"] for m in g["members"]), g["key"]))
         groups += [{"id": f"{kind[0]}{n}", **g} for n, g in enumerate(found, 1)]
     polluted = []
     for f in foods:
@@ -254,7 +259,7 @@ def _cmd_group_plan(args: argparse.Namespace) -> int:
     ingredients: dict[int, list] = {}
     if kind == "food":
         for i in [m for m in merge if m in live] + ([args.keep] if args.rename else []):
-            ingredients[i] = client.list_all("api/ingredient/", {"food": i, "simple": 1})
+            ingredients[i] = client.list_all("api/ingredient/", {"food": i})  # ?simple=1 would drop used_in_recipes
     plan = tcl.build_group_plan(state, kind, args.keep, [m for m in merge if m in live], details, ingredients, args.rename)
     _save(args.output, plan)
     print(f"Plan written: {args.output} ({len(plan['ops'])} operations, {len(plan['warnings'])} warnings, {len(plan['problems'])} problems)")
