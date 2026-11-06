@@ -129,6 +129,12 @@ class ClientTests(unittest.TestCase):
         r = cli(None, "check", token=None)
         self.assertEqual(r.returncode, 3)
 
+    def test_url_without_scheme_is_a_setup_error_not_a_traceback(self):
+        r = cli("tandoor.example.com", "check")
+        self.assertEqual(r.returncode, 3)
+        self.assertIn("http://", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+
     def test_every_command_warns_on_http_not_only_check(self):
         r = cli("http://tandoor.invalid", "recipes")
         self.assertIn("plain http://", r.stderr)

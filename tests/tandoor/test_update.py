@@ -1,4 +1,6 @@
 import json
+import os
+import stat
 import unittest
 
 from helpers import FakeCase
@@ -56,6 +58,11 @@ class UpdateTests(FakeCase):
         self.assertIn("Altes Gericht", r.stdout)
         self.assertIn("tandoor-id: 60", r.stdout)
         self.assertIn(f"tandoor-updated-at: {PULLED_AT}", r.stdout)
+
+    def test_pull_backup_is_owner_only(self):
+        backup = self.tmp / "backup.json"
+        self.assertEqual(self.run_cli("pull", 60, "-o", backup).returncode, 0)
+        self.assertEqual(stat.S_IMODE(os.stat(backup).st_mode), 0o600)
 
     def test_pull_never_overwrites_an_earlier_backup(self):
         backup = self.tmp / "backup.json"

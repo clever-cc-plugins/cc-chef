@@ -245,6 +245,7 @@ class FakeTandoor:
                 ing_id += 1
                 new["ingredients"].append({
                     **ing,
+                    **({"amount": round(float(ing["amount"]), 4)} if ing.get("amount") is not None else {}),  # Tandoor 2.7.2 answers with four decimals
                     "id": ing.get("id") or ing_id,
                     "food": self.resolve_ref("food", ing["food"]),
                     "unit": self.resolve_ref("unit", ing["unit"]) if ing.get("unit") else None,

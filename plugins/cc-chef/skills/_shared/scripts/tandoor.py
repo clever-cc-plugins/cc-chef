@@ -8,7 +8,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 import recipe_tool as rt
@@ -38,7 +40,25 @@ def plan_digest(plan: dict) -> str:
 
 
 def _save(path: str, data: dict) -> None:
-    Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    """Write through a private temp file (owner-only) and replace the target, so a failed write never truncates an earlier plan."""
+    target, tmp = Path(path), None
+    try:
+        fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=target.name + ".")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        os.replace(tmp, target)
+    except OSError as e:
+        if tmp:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+        raise tc.TandoorError(f"{path}: {e.strerror or e}") from None
+
+
+def _recipes_titled(client: tc.Client, title: str) -> list[dict]:
+    found = client.list_all("api/recipe/", {"query": title})
+    return [{"id": r["id"], "name": r["name"]} for r in found if tm.normalize(r["name"]) == tm.normalize(title)]
 
 
 def _load_plan(path: str) -> dict:
@@ -111,8 +131,7 @@ def _cmd_match(args: argparse.Namespace) -> int:
             m["decision"] = "use" if confident else ("create" if kind == "keyword" else None)
             plan[kind + "s"][key] = m
     if not live:
-        found = client.get("api/recipe/", {"query": recipe.title, "page_size": 100})["results"]
-        plan["existing"] = [{"id": r["id"], "name": r["name"]} for r in found if tm.normalize(r["name"]) == tm.normalize(recipe.title)]
+        plan["existing"] = _recipes_titled(client, recipe.title)
     _save(args.output, plan)
     for kind, e in _open_items(plan):
         print(_open_line(kind, e))
@@ -155,7 +174,8 @@ def _cmd_pull(args: argparse.Namespace) -> int:
             e = tc.TandoorError(f"there is no recipe with id {args.id} on this instance", 404)
         raise e from None
     try:
-        with open(args.output, "x", encoding="utf-8") as f:  # never replace an earlier backup: it may be the state from before a change
+        # exclusive and owner-only: never replace an earlier backup (it may be the state from before a change), never share the recipe data
+        with os.fdopen(os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8") as f:
             f.write(json.dumps(recipe, indent=2, ensure_ascii=False) + "\n")
     except FileExistsError:
         print(f"{args.output} already exists and may hold an earlier state of the recipe: choose another file name", file=sys.stderr)
@@ -309,6 +329,10 @@ def _stale(client: tc.Client, plan: dict) -> str | None:
         live = _live_entry(client, kind, entry["id"])
         if live is None or live["name"] != entry["name"]:
             return f"{kind} '{entry['name']}' (id {entry['id']}) changed or is gone"
+    for entry_id, seen in plan.get("seen", {}).items():
+        now = sorted(i["id"] for i in client.list_all("api/ingredient/", {"food": int(entry_id)}))
+        if now != seen:
+            return f"the ingredients that use food {entry_id} changed since the plan was made: run group-plan again"
     for op in plan["ops"]:
         if op["op"] == "note" and (client.get(f"api/ingredient/{op['ingredient']}/").get("note") or "").strip() != op["before"]:
             return f"ingredient {op['ingredient']} was edited"
@@ -447,6 +471,9 @@ def _cmd_upload(args: argparse.Namespace) -> int:
     updating = plan["mode"] == "update"
     if updating and client.get(f"api/recipe/{plan['tandoor_id']}/").get("updated_at") != plan["updated_at"]:
         print("the recipe was edited in Tandoor after the plan was made: run match again", file=sys.stderr)
+        return 1
+    if not updating and not args.allow_duplicate and _recipes_titled(client, plan["payload"]["name"]):
+        print("a recipe with this name exists now, or this plan was already uploaded: run match again", file=sys.stderr)
         return 1
     created: dict[str, dict] = {k: {} for k in KINDS}
     try:

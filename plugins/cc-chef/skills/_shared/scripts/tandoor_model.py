@@ -157,7 +157,8 @@ def render_source(recipe: dict) -> str:
         lines += ["", recipe["description"]]
     facts = []
     if recipe.get("servings"):
-        facts.append(f"Servings: {recipe.get('servings_text') or recipe['servings']}")
+        label = recipe.get("servings_text")
+        facts.append(f"Servings: {recipe['servings']}" + (f" ({label})" if label else ""))
     if recipe.get("working_time"):
         facts.append(f"Working time: {recipe['working_time']} min")
     if recipe.get("waiting_time"):
@@ -222,6 +223,6 @@ def read_back_diff(sent: dict, got: dict) -> list[str]:
                 diffs.append(f"{where}: food id sent {(a.get('food') or {}).get('id')}, stored {(b.get('food') or {}).get('id')}")
             if (a.get("unit") or {}).get("id") != (b.get("unit") or {}).get("id"):
                 diffs.append(f"{where}: unit id sent {(a.get('unit') or {}).get('id')}, stored {(b.get('unit') or {}).get('id')}")
-            if float(a.get("amount") or 0) != float(b.get("amount") or 0):
+            if round(float(a.get("amount") or 0), 4) != round(float(b.get("amount") or 0), 4):  # Tandoor answers with four decimals
                 diffs.append(f"{where}: amount sent {a.get('amount')}, stored {b.get('amount')}")
     return diffs

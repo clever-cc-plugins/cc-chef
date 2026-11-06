@@ -194,12 +194,27 @@ class ApplyTests(FakeCase):
 
     def test_rename_polluted_food(self):
         plan = self.make_plan("--rename", "Mehl", keep="5", merge="")
-        self.assertEqual([o["op"] for o in plan["ops"]], ["note", "rename"])
+        self.assertEqual([o["op"] for o in plan["ops"]], ["note", "rename", "alias"])
+        self.assertIn({"op": "alias", "name": "Mehl, gesiebt", "target": "Mehl"}, plan["ops"])  # imports keep finding the old name
         self.assertEqual(self.apply().returncode, 0)
         order = self.methods()
         self.assertLess(next(i for i, (m, p) in enumerate(order) if "/ingredient/" in p), next(i for i, (m, p) in enumerate(order) if p == "/api/food/5/"))
         self.assertEqual(self.fake.db["food"][2]["name"], "Mehl")
         self.assertEqual(self.fake.db["recipe"][3]["steps"][0]["ingredients"][0]["note"], "gesiebt")
+
+    def test_rename_warns_about_hidden_recipes_of_the_kept_food(self):
+        self.fake.db["recipe"].append(recipe(74, "Geheim", ing(741, {"id": 5, "name": "Mehl, gesiebt"}), hidden=True))
+        plan = self.make_plan("--rename", "Mehl", keep="5", merge="")
+        self.assertTrue(any("Mehl, gesiebt" in w and "reaches 1" in w and "rename" in w for w in plan["warnings"]), plan["warnings"])
+
+    def test_apply_refuses_when_an_ingredient_appeared_after_the_plan(self):
+        self.make_plan()
+        self.fake.db["recipe"].append(recipe(76, "Neu", ing(761, CHOPPED)))  # uses the polluted food: its detail would be lost on merge
+        r = self.apply()
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("changed since the plan was made", r.stderr)
+        self.assertEqual(self.writes(), [])  # nothing was moved or merged
+        self.assertIn(2, [f["id"] for f in self.fake.db["food"]])
 
     def test_detail_by_hand(self):
         plan = self.make_plan("--detail", "2=fein gewürfelt")

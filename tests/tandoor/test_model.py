@@ -24,6 +24,16 @@ def mini(ingredient="- **1 l** Wasser", title="Suppe", meta="", notes=""):
 
 
 class ModelTests(unittest.TestCase):
+    def test_render_source_keeps_the_count_next_to_a_servings_label(self):
+        self.assertIn("Servings: 4 (Portionen)", tm.render_source({"name": "Suppe", "servings": 4, "servings_text": "Portionen", "steps": []}))
+        self.assertIn("Servings: 4\n", tm.render_source({"name": "Suppe", "servings": 4, "steps": []}))
+
+    def test_read_back_accepts_the_four_decimals_tandoor_answers_with(self):
+        def recipe(amount):
+            return {"steps": [{"ingredients": [{"food": {"id": 1}, "unit": None, "amount": amount}]}]}
+        self.assertEqual(tm.read_back_diff(recipe(1 / 3), recipe(0.3333)), [])
+        self.assertEqual(len(tm.read_back_diff(recipe(1 / 3), recipe(0.3))), 1)
+
     def test_render_source_unnamed_step_stays_a_valid_heading(self):
         text = tm.render_source({"name": "Suppe", "steps": [{"name": "Kochen", "ingredients": []}, {"name": "", "ingredients": []}]})
         headings = [line for line in text.splitlines() if line.startswith("### ")]

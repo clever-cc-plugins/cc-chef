@@ -1,4 +1,6 @@
+import os
 import re
+import stat
 import unittest
 
 from helpers import SEED, FakeCase, FakeTandoor
@@ -121,6 +123,24 @@ class UploadTests(FakeCase):
         self.assertIn(f"Created: {new_id} ", r.stdout)
         self.assertIn("do not upload this plan again", r.stderr)
         self.assertEqual(len(self.fake.db["recipe"]), 1)
+
+    def test_replaying_a_create_plan_does_not_create_a_second_recipe(self):
+        self.match()
+        self.resolve_all()
+        digest = self.digest()
+        self.assertEqual(self.run_cli("upload", self.plan_path, "--confirm", digest).returncode, 0)
+        r = self.run_cli("upload", self.plan_path, "--confirm", digest)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("run match again", r.stderr)
+        self.assertEqual(len(self.fake.db["recipe"]), 1)
+
+    def test_plan_files_are_owner_only_and_a_failed_save_names_the_path(self):
+        self.match()
+        self.assertEqual(stat.S_IMODE(os.stat(self.plan_path).st_mode), 0o600)
+        r = self.run_cli("match", self.recipe, "-o", self.tmp / "missing-dir" / "plan.json")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("missing-dir", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
 
     def test_upload_sends_only_ids(self):
         self.match()

@@ -210,7 +210,7 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
         ops.append({"op": "rename", "id": keep, "name": rename})
 
     existing = report["aliases"]
-    for src in sources:
+    for src in sources + ([keep_entry] if rename else []):  # a renamed keeper keeps its old name as an alias, like a merged source
         if normalize(src["name"]) == normalize(target_name):
             continue
         if not any(a.get("type") == alias_type and normalize(a.get("param_1") or "") == normalize(src["name"]) for a in existing):
@@ -227,14 +227,17 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
         convs = sum(_involves(c, kind, src["id"]) for c in report["conversions"])
         if convs:
             warnings.append(f"'{src['name']}' has {convs} unit conversions: the merge deletes them")
-        if kind == "food":
-            reached = len({r["id"] for i in ingredients.get(src["id"], []) for r in i.get("used_in_recipes", [])})
-            used = src.get("numrecipe") or 0
+    if kind == "food":
+        for holder in note_holders:
+            reached = len({r["id"] for i in ingredients.get(holder["id"], []) for r in i.get("used_in_recipes", [])})
+            used = holder.get("numrecipe") or 0
             if used > reached:
+                what = "merge" if holder in sources else "rename"
                 warnings.append(
-                    f"'{src['name']}' is used in {used} recipes, but this token reaches {reached}: the detail cannot be moved into the others, and the merge cannot be undone"
+                    f"'{holder['name']}' is used in {used} recipes, but this token reaches {reached}: the detail cannot be moved into the others, and the {what} cannot be undone"
                 )
     return {
         "version": 1, "base_url": report["base_url"], "kind": kind, "keep": keep_entry, "sources": sources,
         "ops": ops, "warnings": warnings, "problems": problems,
+        "seen": {str(i): sorted(x["id"] for x in items) for i, items in ingredients.items()},
     }

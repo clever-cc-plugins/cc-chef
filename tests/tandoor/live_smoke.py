@@ -34,6 +34,7 @@ PROPERTY_TYPE = "cctest-kcal"
 KEYWORDS = ("cctest", "cc-chef")
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
 
+# the 1/3 below is stored as 0.3333: the read-back must not call that a difference
 RECIPE = f"""---
 cc-chef: 1
 title: {TITLE}
@@ -57,13 +58,13 @@ Alles mischen.
 
 ### 2. Garen
 
-- **1** {FOOD_B}
+- **1/3** {FOOD_B}
 
 Zehn Minuten garen.
 """
 
 results: list[tuple[str, str, str]] = []
-client = tc.Client(tc.load_config())
+client: tc.Client  # set in main(), after the --run check, so --help works without a configured instance
 
 
 def api(method, path, body=None, params=None):
@@ -182,6 +183,12 @@ def main():
     if not args.run:
         print(__doc__)
         return 2
+    global client
+    try:
+        client = tc.Client(tc.load_config())
+    except tc.NotConfigured as e:
+        print(e, file=sys.stderr)
+        return 3
     version = api("GET", "api/server-settings/current/").get("version")
     print(f"instance {client.config.url}, Tandoor {version}\n")
     keep_kw = {r["name"] for r in client.list_all("api/keyword/")} & set(KEYWORDS)

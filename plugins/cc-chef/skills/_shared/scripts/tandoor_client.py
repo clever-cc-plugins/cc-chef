@@ -34,6 +34,9 @@ def load_config(env=os.environ) -> Config:
     url, token = (env.get("TANDOOR_URL") or "").strip(), (env.get("TANDOOR_TOKEN") or "").strip()
     if not url or not token:
         raise NotConfigured("Tandoor is not configured: set TANDOOR_URL and TANDOOR_TOKEN in the shell that starts Claude Code")
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise NotConfigured("TANDOOR_URL must start with http:// or https://, for example https://tandoor.example.com")
     return Config(url.rstrip("/"), token)
 
 
@@ -48,7 +51,7 @@ class Client:
         self.config = config
         self.timeout = timeout
         host = urllib.parse.urlsplit(config.url)
-        if host.scheme == "http" and host.hostname not in ("localhost", "127.0.0.1"):
+        if host.scheme == "http" and host.hostname not in ("localhost", "127.0.0.1", "::1"):
             print("Warning: TANDOOR_URL uses plain http://, so the token travels unencrypted", file=sys.stderr)
         self._opener = urllib.request.build_opener(_NoRedirect)
 
