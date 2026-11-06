@@ -3,10 +3,10 @@ name: dietary-guidelines
 description: >
   Write an opt-in personal dietary guideline per household member: allergens,
   hard constraints, safety rules and nutrition targets that the other cc-chef
-  skills apply. Invoke when the user says "make me a dietary guideline" or "turn
+  skills apply. Invoke when the user says "make me a dietary guideline", "turn
   this research into a guideline" or "Ernährungsrichtlinie für meine Familie
-  erstellen". Do NOT use it for general cooking preferences
-  (chef-onboarding) or a research prompt (research-prompt).
+  erstellen". Do NOT use it for general cooking preferences (chef-onboarding)
+  or a research prompt (research-prompt).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 argument-hint: "[optional: path to research results or an existing guideline to convert or update]"
 ---
