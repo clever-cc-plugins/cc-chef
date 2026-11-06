@@ -97,12 +97,13 @@ class FakeTandoor:
         merge = re.fullmatch(r"(food|unit)/(\d+)/merge/(\d+)/", rest)
         if merge and method == "PUT":
             return self.merge(merge.group(1), int(merge.group(2)), int(merge.group(3)))
-        m = re.fullmatch(r"([a-z-]+)/(?:(\d+)/)?", rest)
-        if m and m.group(1) == "ingredient":
-            return self.ingredient_route(method, m.group(2), query, body)
-        if not m or m.group(1) not in self.db:
+        parts = rest.split("/")  # "coll/" or "coll/<id>/"
+        shaped = parts[-1] == "" and (len(parts) == 2 or (len(parts) == 3 and parts[1].isdigit()))
+        coll, item_id = (parts[0], parts[1] if len(parts) == 3 else None) if shaped else (None, None)
+        if coll == "ingredient":
+            return self.ingredient_route(method, item_id, query, body)
+        if coll not in self.db:
             return 404, "application/json", {"detail": "Not found."}, {}
-        coll, item_id = m.group(1), m.group(2)
         items = self.db[coll]
         if item_id is None and method == "GET":
             return self.list_items(coll, items, query)
