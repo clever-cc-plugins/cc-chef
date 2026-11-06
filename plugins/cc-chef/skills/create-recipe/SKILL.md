@@ -1,7 +1,11 @@
 ---
 name: create-recipe
 description: >
-  Use this skill to turn a mood, a list of ingredients, a fridge or pantry photo, or a named dish into recipe ideas and then one full, cookable everyday recipe. Invoke when the user says "what can I cook with this", "I need to use up chicken and courgette", "here's a photo of my fridge, what can I make", "I fancy something warm and comforting", "write me a recipe for goulash", or "Was kann ich mit Reis und Zucchini kochen?". Reads the cooking preferences and any registered guidelines, and hands the finished recipe to export-recipe for saving. Do NOT use it to adapt or restructure an existing recipe (use rework-recipe) or to save or convert an already finished recipe (use export-recipe).
+  Turn a mood, ingredients, a fridge photo or a dish name into one cookable
+  everyday recipe. Invoke when the user says "what can I cook with this", "I need
+  to use up chicken and courgette" or "write me a recipe for goulash". Hands the
+  result to export-recipe for saving. Do NOT use it to adapt an existing recipe
+  (rework-recipe) or to save one (export-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 argument-hint: "[optional: ingredients, a mood, a dish name, or a photo path]"
 ---

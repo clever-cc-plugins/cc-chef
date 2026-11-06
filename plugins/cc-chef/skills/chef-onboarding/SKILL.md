@@ -1,7 +1,11 @@
 ---
 name: chef-onboarding
 description: >
-  Use this skill to set up the cooking context the other cc-chef skills use: language, units, region, household, equipment, tastes, recipe target and save folder. Invoke when the user says "set up cc-chef", "onboard me for cooking", "set my cooking preferences", "register my food list", "change my recipe save folder", or "update my cooking preferences". Runs standalone, recognises context a project already has, and can be re-run to change single answers. Do NOT use it to write a recipe (use create-recipe) or to write a personal dietary guideline (use dietary-guidelines).
+  Set up the cooking context the other cc-chef skills use: language, units,
+  region, household, equipment, tastes and recipe save folder. Invoke when the
+  user says "set up cc-chef", "onboard me for cooking" or "change my recipe save
+  folder". Can be re-run to change single answers. Do NOT use it to write a
+  recipe (create-recipe) or a dietary guideline (dietary-guidelines).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 argument-hint: "[optional: path to an existing food list or preferences file to register]"
 ---

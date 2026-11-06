@@ -1,7 +1,11 @@
 ---
 name: research-prompt
 description: >
-  Use this skill when the user wants a ready-to-paste research prompt for a "deep research" AI tool (Claude, ChatGPT, Gemini, Perplexity, DeepSeek or similar) about a diet, an intolerance, a condition-related eating pattern, a cultural or religious food practice, or a cooking constraint. Invoke when the user says "give me a research prompt for a low-FODMAP diet", "write a deep research prompt on histamine intolerance", "I need to research halal cooking before I set up guidelines", "research prompt for a gluten-free kitchen", or "Recherche-Prompt für eine Ernährungsform". It produces only the prompt text: it runs no research, calls no tool and saves nothing. Do NOT use it to write the guideline itself from research results (use dietary-guidelines).
+  Build a ready-to-paste deep-research prompt about a diet, intolerance or food
+  constraint. Invoke when the user says "give me a research prompt for a low-FODMAP
+  diet" or "Recherche-Prompt für eine Ernährungsform". Produces only the prompt
+  text: no research, no saving. Do NOT use it to write the guideline from results
+  (dietary-guidelines).
 allowed-tools: Read, Write, Bash
 argument-hint: "[optional: diet, intolerance, practice or constraint to research]"
 ---

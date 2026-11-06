@@ -1,7 +1,11 @@
 ---
 name: rework-recipe
 description: >
-  Use this skill to restructure an existing recipe (pasted text, a URL, a photo of a page, a saved recipe file or a recipe in their Tandoor instance) to the user's preferences: house style, language, units, step-by-step ingredients, optionally adapted to a dietary guideline. Invoke when the user says "rework this recipe", "convert this recipe to grams", "clean up this recipe from the web", "translate and restructure this recipe", "adapt this recipe to my guidelines", or "rework my Tandoor recipe", or "Bau dieses Rezept um". Flags every real recipe change and keeps the original values in the notes. Do NOT use it to create a new recipe from ingredients or an idea (use create-recipe) or to only convert or save an already finished recipe file (use export-recipe).
+  Restructure an existing recipe (text, URL, photo, saved file or Tandoor recipe)
+  to the user's house style, language and units, optionally adapted to a dietary
+  guideline. Invoke when the user says "rework this recipe" or "convert this
+  recipe to grams". Flags every real change. Do NOT use it to create a new recipe
+  (create-recipe) or only to save one (export-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
 argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe file path]"
 ---
