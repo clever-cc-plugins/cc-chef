@@ -59,7 +59,7 @@ python3 tests/tandoor/fake_tandoor.py --port 8099 --seed tests/tandoor/fixtures/
 export TANDOOR_URL=http://127.0.0.1:8099 TANDOOR_TOKEN=test-token
 ```
 
-`"Bash(python3:*)"` is already in the allowlist above, so the skills can call `tandoor.py`. The fake keeps every request in memory only; to read what it received, run it in a Python session with `FakeTandoor` and inspect `.requests`, or add `-v` logging while debugging. After every scenario, grep the scratch project for `test-token`: there must be no match.
+`"Bash(python3:*)"` is already in the allowlist above, so the skills can call `tandoor.py`. Add `--log <file>` to the `fake_tandoor.py` command to record one `METHOD PATH` line per request (never the token); scenarios K, L and N check their "no write before the OK" expectation with `grep -v '^GET' <file>`. After every scenario, grep the scratch project for `test-token`: there must be no match.
 
 ### A: onboarding, German
 
