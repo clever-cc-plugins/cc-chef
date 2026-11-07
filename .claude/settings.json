@@ -14,7 +14,7 @@
       "Bash(python3 -m unittest discover -s tests/recipe-tool*)",
       "Bash(python3 -m unittest discover -s tests/tandoor*)"
     ],
-    "ask": ["Bash(git push*)", "Bash(git -C * push*)"],
+    "ask": ["Bash(git push*)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.local)",
