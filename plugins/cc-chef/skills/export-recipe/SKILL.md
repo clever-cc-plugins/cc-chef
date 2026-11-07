@@ -7,7 +7,7 @@ description: >
   the conversation or saved files. Do NOT use it to make a new recipe
   (create-recipe).
 allowed-tools: Read, Write, Edit, Bash, Glob
-argument-hint: "[optional: path(s) to saved recipe .md files to export]"
+argument-hint: "[optional: path(s) to saved recipe .md files] [optional: target files, json-ld, paprika or tandoor]"
 ---
 
 @../\_shared/recipe-format.md **Read when:** writing the Markdown file, naming it by hand, or fixing a validation error
@@ -18,9 +18,9 @@ argument-hint: "[optional: path(s) to saved recipe .md files to export]"
 
 # Export Recipe
 
-This skill saves a recipe as a Markdown file and converts it to the configured target. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only export-specific behaviour. Everything shown to the user is in the output language. Run directly, its reply opens with the contract's framing line (its Step 2) as the first line, and it ends with the contract's Step 5 (feedback and learnings; the tag `[cc-chef:export-recipe]` goes into learnings entries only, never into the reply). On a hand-off it skips both.
+This skill saves a recipe as a Markdown file and converts it to the effective target (Step 2): the one the user names in the request, otherwise the configured one. It follows `../_shared/skill-contract.md` (language, address form and tone included); the steps below add only export-specific behaviour. Everything shown to the user is in the output language. Run directly, its reply opens with the contract's framing line (its Step 2) as the first line, and it ends with the contract's Step 5 (feedback and learnings; the tag `[cc-chef:export-recipe]` goes into learnings entries only, never into the reply). On a hand-off it skips both.
 
-`$ARGUMENTS` holds zero or more paths to saved recipe files. With paths, the Markdown files already exist: skip Step 3 and validate them in Step 4. Without paths, the recipe in the conversation is the input.
+`$ARGUMENTS` holds zero or more paths to saved recipe files, optionally with a target word (`files`, `json-ld`, `paprika` or `tandoor`) that counts as a target named in the request (Step 2); it is never a path. With paths, the Markdown files already exist: skip Step 3 and validate them in Step 4. Without paths, the recipe in the conversation is the input.
 
 When another skill hands off (`create-recipe`, `rework-recipe`), it follows this skill from Step 1 with the recipe already in the conversation and skips this skill's framing line, which the handing-off skill already showed. Steps 1 and 2 always run; Step 3 writes the Markdown from the conversation's recipe.
 
@@ -30,9 +30,9 @@ Run `command -v python3` once, before the first script call. Without it: continu
 
 ## Step 2: Find the save folder and target
 
-Read `Recipe target` (`files`, `json-ld` or `paprika`; `files` when there are no preferences) and, when Step 3 will run, `Save folder` from the registered cooking preferences. If the user names a different target in the request, use that one for this run.
+Read `Recipe target` (`files`, `json-ld` or `paprika`; `files` when there are no preferences) and, when Step 3 will run, `Save folder` from the registered cooking preferences. The effective target for this run is the one the user names in the request (`files`, `json-ld`, `paprika` or `tandoor`, one or several), and only without one the configured `Recipe target`. A named target that differs from the configured one is a normal one-off exception: never refuse it, never ask the user to re-run onboarding or change their preferences, and leave the stored `Recipe target` as it is. Every later mention of "the target" in this skill means the effective target.
 
-If `Recipe target` is `tandoor`, or the user asks for Tandoor, check the connection:
+If the effective target is `tandoor`, check the connection:
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py" check
@@ -64,7 +64,7 @@ Run it for each file. Exit 0 prints `OK: <title>, <n> steps, <m> ingredients`. E
 
 ## Step 5: Convert to the target
 
-- `files`: nothing to convert. Offer JSON-LD or Paprika only if the user mentioned an app.
+- `files`: nothing to convert. Offer JSON-LD or Paprika only if the user mentioned an app. Exception: when the user called this skill directly with paths and named no target, the files already exist, so a conversion is the only thing left to do: ask once which target they want (`json-ld`, `paprika` or `tandoor`, with the one-line fit from `export-formats.md` section 5) instead of ending with nothing done, and then run it as a one-off.
 - `json-ld`: one `.json` file per recipe, sharing the Markdown file's stem and placed next to it (`<recipe.json>` is the path of `<recipe.md>` with the extension swapped).
 
   ```bash
