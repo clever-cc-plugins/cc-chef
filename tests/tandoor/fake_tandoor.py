@@ -114,6 +114,9 @@ class FakeTandoor:
             return 404, "application/json", {"detail": "Not found."}, {}
         if method == "GET":
             return 200, "application/json", self.extend(coll, found, query, single=True), {}
+        if method == "DELETE" and coll in ("food", "unit"):
+            items.remove(found)
+            return 204, "application/json", b"", {}
         if method == "PATCH" and coll == "recipe":
             return self.patch_recipe(found, body)
         if method == "PATCH":
@@ -164,6 +167,8 @@ class FakeTandoor:
             rows = []
             for recipe, ing in self.all_ingredients():
                 if query.get("food") and str((ing.get("food") or {}).get("id")) != query["food"]:
+                    continue
+                if query.get("unit") and str((ing.get("unit") or {}).get("id")) != query["unit"]:
                     continue
                 if recipe.get("hidden"):
                     continue  # other users' private recipes (not verifiable live with a single user)

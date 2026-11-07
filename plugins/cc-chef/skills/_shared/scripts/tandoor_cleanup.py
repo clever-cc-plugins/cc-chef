@@ -186,6 +186,39 @@ def _involves(conversion: dict, kind: str, entry_id: int) -> bool:
     return entry_id in (_ref_id(conversion.get("base_unit")), _ref_id(conversion.get("converted_unit")))
 
 
+def build_delete_plan(report, kind, ids, used) -> dict:
+    """Plan the deletion of entries that nothing uses. `used` maps an id to the number of ingredients that still use it."""
+    entries = {e["id"]: e for e in report[kind + "s"]}
+    sources = [entries[i] for i in ids if i in entries]
+    ops: list[dict] = []
+    warnings: list[str] = []
+    problems: list[str] = []
+    for src in sources:
+        name = src["name"]
+        if used.get(src["id"]):
+            problems.append(f"'{name}' is used by {used[src['id']]} ingredients: only entries that nothing uses can be deleted")
+        elif src.get("numrecipe"):
+            problems.append(f"'{name}' is used in {src['numrecipe']} recipes: only entries that nothing uses can be deleted")
+        if kind == "food" and descendants(src["id"], report["foods"]):
+            problems.append(f"'{name}' has child foods, and Tandoor deletes them together with it: move or delete them first")
+        ops.append({"op": "delete", "id": src["id"], "name": name, "used": used.get(src["id"], 0)})
+        props = len(src.get("properties") or [])
+        if props:
+            warnings.append(f"'{name}' has {props} properties (nutrition values): they are lost with the entry, and Tandoor leaves their rows behind")
+        convs = sum(_involves(c, kind, src["id"]) for c in report["conversions"])
+        if convs:
+            warnings.append(f"'{name}' has {convs} unit conversions: the deletion removes them")
+        for a in report["aliases"]:
+            if a.get("type") == ALIAS_TYPES[kind] and normalize(name) in (normalize(a.get("param_1") or ""), normalize(a.get("param_2") or "")):
+                warnings.append(f"alias '{a.get('param_1')}' -> '{a.get('param_2')}' stays and may create '{name}' again on a later import")
+    if not sources:
+        problems.append("nothing to do: none of the entries is left")
+    return {
+        "version": 1, "base_url": report["base_url"], "kind": kind, "keep": None, "sources": sources,
+        "ops": ops, "warnings": warnings, "problems": problems, "seen": {},
+    }
+
+
 def build_group_plan(report, kind, keep, merge, details, ingredients, rename=None, plural=None) -> dict:
     """Plan the note moves, merges, rename, plural name and aliases for one approved group.
 

@@ -267,12 +267,58 @@ def _same_instance(plan: dict, cfg: tc.Config) -> bool:
     return True
 
 
+def _users(client: tc.Client, kind: str, entry_id: int) -> list[dict]:
+    """The ingredients that really use the entry (the filter is checked on every row, so an ignored filter only makes it slower)."""
+    rows = client.list_all("api/ingredient/", {kind: entry_id, "simple": 1})
+    return [i for i in rows if (i.get(kind) or {}).get("id") == entry_id]
+
+
+def _cmd_group_delete_plan(args: argparse.Namespace, report: dict, client: tc.Client) -> int:
+    if args.keep is not None or args.merge or args.detail or args.rename or args.plural:
+        print("--delete cannot be combined with --keep, --merge, --detail, --rename or --plural", file=sys.stderr)
+        return 1
+    try:
+        ids = [int(i) for i in args.delete.split(",") if i.strip()]
+    except ValueError:
+        print("--delete takes comma-separated ids", file=sys.stderr)
+        return 1
+    kind = args.kind
+    unknown = [i for i in ids if i not in {e["id"] for e in report[kind + "s"]}]
+    if unknown:
+        print(f"not in the report as a {kind}: {', '.join(map(str, unknown))}; check the ids against the report", file=sys.stderr)
+        return 1
+    live = {}
+    for i in ids:
+        entry = _live_entry(client, kind, i)
+        if entry is None:
+            print(f"{kind} {i} no longer exists and is left out")
+        else:
+            live[i] = entry
+    state = {
+        **report,
+        kind + "s": [live.get(e["id"], e) for e in report[kind + "s"]],
+        "aliases": [
+            a for a in client.list_all("api/automation/")
+            if a.get("type") in ("FOOD_ALIAS", "UNIT_ALIAS") and not a.get("disabled")
+        ],
+    }
+    plan = tcl.build_delete_plan(state, kind, list(live), {i: len(_users(client, kind, i)) for i in live})
+    _save(args.output, plan)
+    print(f"Plan written: {args.output} ({len(plan['ops'])} operations, {len(plan['warnings'])} warnings, {len(plan['problems'])} problems)")
+    return 0
+
+
 def _cmd_group_plan(args: argparse.Namespace) -> int:
     report = _load_plan(args.report)
     cfg = tc.load_config()
     if not _same_instance(report, cfg):
         return 1
     client = tc.Client(cfg)
+    if args.delete:
+        return _cmd_group_delete_plan(args, report, client)
+    if args.keep is None:
+        print("group-plan needs --keep (to merge or rename) or --delete", file=sys.stderr)
+        return 1
     try:
         details = {int(k): v for k, _, v in (d.partition("=") for d in args.detail)}
         merge = [int(i) for i in args.merge.split(",") if i.strip()]
@@ -314,7 +360,9 @@ def _cmd_group_plan(args: argparse.Namespace) -> int:
 
 
 def _describe_op(op: dict, plan: dict) -> str:
-    names = {e["id"]: e["name"] for e in [plan["keep"], *plan["sources"]]}
+    names = {e["id"]: e["name"] for e in [plan["keep"], *plan["sources"]] if e}
+    if op["op"] == "delete":
+        return f"delete {plan['kind']} '{op['name']}' (id {op['id']}, used by {op['used']} ingredients)"
     if op["op"] == "note":
         where = ", ".join(op["recipes"]) or "recipe unknown"
         return f"note of ingredient {op['ingredient']} ({op['food']}, in {where}): '{op['before']}' -> '{op['note']}'"
@@ -331,7 +379,10 @@ def _describe_op(op: dict, plan: dict) -> str:
 
 def _cmd_group_preview(args: argparse.Namespace) -> int:
     plan = _load_plan(args.plan)
-    print(f"Keep {plan['kind']}: '{plan['keep']['name']}' (id {plan['keep']['id']})")
+    if plan["keep"]:
+        print(f"Keep {plan['kind']}: '{plan['keep']['name']}' (id {plan['keep']['id']})")
+    else:
+        print(f"Delete {plan['kind']}s that nothing uses")
     for op in plan["ops"]:
         print(f"- {_describe_op(op, plan)}")
     for w in plan["warnings"]:
@@ -341,14 +392,14 @@ def _cmd_group_preview(args: argparse.Namespace) -> int:
     if plan["problems"]:
         print("Fix the problems and run group-plan again; no confirmation code is given.")
         return 1
-    print("Merges cannot be undone. Make sure you have an instance backup.")
+    print(("Merges" if plan["keep"] else "Deletions") + " cannot be undone. Make sure you have an instance backup.")
     print(f"Confirm: {plan_digest(plan)}")
     return 0
 
 
 def _stale(client: tc.Client, plan: dict) -> str | None:
     kind = plan["kind"]
-    for entry in [plan["keep"], *plan["sources"]]:
+    for entry in [e for e in [plan["keep"], *plan["sources"]] if e]:
         live = _live_entry(client, kind, entry["id"])
         if live is None or live["name"] != entry["name"]:
             return f"{kind} '{entry['name']}' (id {entry['id']}) changed or is gone"
@@ -357,6 +408,8 @@ def _stale(client: tc.Client, plan: dict) -> str | None:
         if now != seen:
             return f"the ingredients that use food {entry_id} changed since the plan was made: run group-plan again"
     for op in plan["ops"]:
+        if op["op"] == "delete" and _users(client, kind, op["id"]):
+            return f"{kind} '{op['name']}' (id {op['id']}) is used by an ingredient now"
         if op["op"] == "note" and (client.get(f"api/ingredient/{op['ingredient']}/").get("note") or "").strip() != op["before"]:
             return f"ingredient {op['ingredient']} was edited"
     return None
@@ -366,6 +419,8 @@ def _run_op(client: tc.Client, plan: dict, op: dict) -> None:
     kind = plan["kind"]
     if op["op"] == "note":
         client.patch(f"api/ingredient/{op['ingredient']}/", {"note": op["note"]})
+    elif op["op"] == "delete":
+        client.delete(f"api/{kind}/{op['id']}/")
     elif op["op"] == "merge":
         client.put(f"api/{kind}/{op['source']}/merge/{op['target']}/")
     elif op["op"] == "rename":
@@ -578,7 +633,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("group-plan", help="plan the cleanup of one approved group")
     p.add_argument("report")
     p.add_argument("--kind", choices=("food", "unit"), required=True)
-    p.add_argument("--keep", type=int, required=True)
+    p.add_argument("--keep", type=int)
+    p.add_argument("--delete", default="", help="comma-separated ids of entries that nothing uses")
     p.add_argument("--merge", default="")
     p.add_argument("--detail", action="append", default=[])
     p.add_argument("--rename")

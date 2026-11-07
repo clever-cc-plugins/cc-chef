@@ -4,7 +4,7 @@ description: >
   Clean up the food and unit database of the user's Tandoor instance by
   merging duplicates group by group after approval. Invoke when the user says
   "clean up my Tandoor foods" or "Tandoor Zutaten aufräumen". Needs TANDOOR_URL and
-  TANDOOR_API_TOKEN; merges cannot be undone. Do NOT use it to upload (export-recipe)
+  TANDOOR_API_TOKEN; merges and deletions cannot be undone. Do NOT use it to upload (export-recipe)
   or restructure a recipe (rework-recipe).
 allowed-tools: Read, Write, Bash, Glob
 argument-hint: "[optional: food or unit to start with]"
@@ -22,7 +22,7 @@ Run `<tandoor> check`. On exit 3 or 1, explain in one line why (the script's mes
 
 ## Step 2: Backup advice
 
-Before the first write, say in the user's language, in plain words: merges cannot be undone; a merge deletes the merged entry together with its nutrition values and unit conversions; nothing changes until they approve a group. Recommend a backup of the instance now (the database or the Tandoor export) and wait for a clear answer. Without a clear yes to go on, stop.
+Before the first write, say in the user's language, in plain words: merges and deletions cannot be undone; a merge deletes the merged entry together with its nutrition values and unit conversions; nothing changes until they approve a group. Recommend a backup of the instance now (the database or the Tandoor export) and wait for a clear answer. Without a clear yes to go on, stop.
 
 ## Step 3: Read the database
 
@@ -46,6 +46,8 @@ For each approved group:
 4. On OK: `<tandoor> group-apply "<plan.json>" --confirm <code>` with the code from that preview. It moves the notes first, then merges, then adds the alias, and stops at the first failure. On a failure, say what was done and what failed, and offer to run `group-plan` again for the same group: a rerun continues without doubling a note.
 
 A group the user declines is never merged.
+
+Entries that no recipe uses and that have no clean partner (a leftover such as `und Pfeffer`, or a broken unit) can be deleted instead of merged, because a merge would add an alias that changes later imports. Plan it with `<tandoor> group-plan "<report.json>" --kind food|unit --delete <id>[,<id>] -o "<plan.json>"`, never together with `--keep`. The script refuses entries that any ingredient or recipe still uses and foods that have child foods; preview, confirmation code and apply work as above. Say in the preview what goes with the entry: nutrition values, unit conversions, and aliases that stay and may create it again on a later import.
 
 ## Step 6: Summary after each batch
 

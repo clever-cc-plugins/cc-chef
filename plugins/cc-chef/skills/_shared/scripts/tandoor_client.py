@@ -138,6 +138,9 @@ class Client:
     def patch(self, path, body):
         return self._request("PATCH", path, body=body)
 
+    def delete(self, path):
+        return self._request("DELETE", path)
+
     def put(self, path, body=None):
         return self._request("PUT", path, body=body)
 

@@ -235,6 +235,55 @@ class ApplyTests(FakeCase):
         plan = self.make_plan(keep="8", merge="9")
         self.assertTrue(any("Knoblauchzehe" in w and "zehe" in w and "unit" in w for w in plan["warnings"]), plan["warnings"])
 
+    def delete_plan(self, ids, kind="food"):
+        self.run_cli("foods-report", "-o", self.report)
+        r = self.run_cli("group-plan", self.report, "--kind", kind, "--delete", ids, "-o", self.gplan)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return json.loads(self.gplan.read_text(encoding="utf-8"))
+
+    def test_delete_unused_food_and_unit(self):
+        self.fake.db["food"].append({"id": 8, "name": "und Pfeffer", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None})
+        self.fake.db["unit"].append({"id": 9, "name": "m.-große", "plural_name": None})
+        for kind, entry_id, coll in (("food", "8", "food"), ("unit", "9", "unit")):
+            plan = self.delete_plan(entry_id, kind)
+            self.assertEqual([o["op"] for o in plan["ops"]], ["delete"])
+            self.assertEqual(plan["problems"], [])
+            code, text = self.confirm()
+            self.assertIn("Deletions cannot be undone", text)
+            self.assertIn("used by 0 ingredients", text)
+            self.assertEqual(self.apply().returncode, 0)
+            self.assertNotIn(int(entry_id), [e["id"] for e in self.fake.db[coll]])
+        self.assertEqual(len(self.fake.db["food"]), 3)
+
+    def test_delete_refuses_entries_that_are_used(self):
+        for ids, kind in (("2", "food"), ("4", "unit")):  # the chopped onion and the unit "Gramm" are in recipes
+            plan = self.delete_plan(ids, kind)
+            self.assertTrue(any("used by 1" in p or "used by 2" in p for p in plan["problems"]), plan["problems"])
+            r = self.run_cli("group-preview", self.gplan)
+            self.assertEqual(r.returncode, 1)
+            self.assertNotIn("Confirm:", r.stdout)
+        self.assertEqual(self.writes(), [])
+
+    def test_delete_refuses_a_food_with_children(self):
+        self.fake.db["food"].append({"id": 8, "name": "Gewürz", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None})
+        self.fake.db["food"][0]["parent"] = {"id": 8, "name": "Gewürz"}
+        self.assertTrue(any("child foods" in p for p in self.delete_plan("8")["problems"]))
+
+    def test_delete_apply_stops_when_the_entry_got_used_after_the_plan(self):
+        self.fake.db["food"].append({"id": 8, "name": "und Pfeffer", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None})
+        self.delete_plan("8")
+        self.fake.db["recipe"].append(recipe(77, "Neu", ing(771, {"id": 8, "name": "und Pfeffer"})))
+        r = self.apply()
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("is used by an ingredient now", r.stderr)
+        self.assertIn(8, [f["id"] for f in self.fake.db["food"]])
+
+    def test_delete_cannot_be_combined_with_keep(self):
+        self.run_cli("foods-report", "-o", self.report)
+        r = self.run_cli("group-plan", self.report, "--kind", "food", "--delete", "5", "--keep", "1", "-o", self.gplan)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("cannot be combined", r.stderr)
+
     def test_empty_detail_means_no_note(self):
         plan = self.make_plan("--detail", "2=")
         self.assertEqual([o for o in plan["ops"] if o["op"] == "note"], [])
