@@ -71,3 +71,7 @@ Written by `/cc-chef:chef-onboarding`. Other cc-chef skills read these fields by
 ## Save folder
 
 <folder for saved recipes, relative to the project>
+
+## Keep Markdown after upload
+
+<yes | no; default yes. Only for the tandoor target: no deletes the Markdown file this run wrote once the upload is verified>

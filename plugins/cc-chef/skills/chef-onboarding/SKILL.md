@@ -56,6 +56,7 @@ Ask in this order, one question each, with the default in brackets:
 
 1. Recipe target: `files` (Markdown recipe files only), `json-ld` (schema.org JSON-LD for apps that import it) or `paprika` (Paprika archive). Default `files`. Offer `tandoor` only after asking whether the user runs a Tandoor instance. If they do and want their recipes sent there, point to the setup in `../_shared/tandoor-api.md` section 1 (token with `read` and `write` scope, `TANDOOR_URL` and `TANDOOR_API_TOKEN` in the project's `.env` file) and run `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py" check`. On success, store `tandoor`. On failure, say why in one line, store `files`, and tell them they can re-run this skill once the setup works. Never ask for the token in the chat. If the user pastes one anyway, do not repeat it, do not store it anywhere, and tell them to create a new token and revoke the pasted one.
 2. Save folder: the user's choice. If Step 1 found an existing recipe folder, propose it. Otherwise propose a name in the output language ("Rezepte/" for German, "recipes/" for English, and so on) and let the user pick any other path. Never use a name the user did not confirm.
+3. Only when the target is `tandoor`: ask whether the Markdown file should stay in the save folder after a verified upload (`yes`, the default, keeps it as a backup) or be deleted (`no`, for those who keep Tandoor as the only place for recipes). Store it as `Keep Markdown after upload`; skip the question for every other target.
 
 ## Step 6: Register an existing food list (optional)
 
