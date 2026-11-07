@@ -100,6 +100,7 @@ Python 3 is needed for validation and conversion, not for saving.
 If you run [Tandoor](https://tandoor.dev), cc-chef can work with it directly, and only when you have configured an instance. Everyone else keeps using files.
 
 - **Upload:** `export-recipe` sends a recipe with its steps and the ingredients attached to the steps that use them. Every ingredient is matched to your food and unit database (including your existing aliases); anything without a confident match is put to you, and a close match is only ever a suggestion. You see a preview and approve it before anything is written. The Markdown file is always saved first.
+- **Matching names while writing:** with a working connection, `create-recipe` and `rework-recipe` look up the foods and units of a recipe in your database before showing it and use your existing names, so the upload creates fewer near-duplicates. This is read-only and is skipped without a connection.
 - **Rework in place:** `rework-recipe` can take a recipe from your instance, restructure it and update it in place after a preview. Processed recipes get a `cc-chef` keyword, and existing keywords are kept.
 - **Food cleanup:** `tandoor-food-cleanup` finds duplicate and polluted foods and units and merges them group by group. Details in a food name move into the notes of the ingredients first, and merges cannot be undone, so make a backup of the instance before the first run.
 

@@ -1,12 +1,12 @@
 # Tandoor API reference
 
-Use this file for everything that touches a user's Tandoor instance: `export-recipe` (upload), `rework-recipe` (update in place), `tandoor-food-cleanup` (food and unit merges) and `chef-onboarding` (offering Tandoor as the recipe target). It covers the one-time setup, the commands of the bundled script `tandoor.py`, the API facts the script relies on, and what Tandoor cannot hold. All HTTP goes through the script; never use `curl`, `wget`, and never read the `.env` file yourself (the script reads it) or put the token into a command line or the conversation.
+Use this file for everything that touches a user's Tandoor instance: `export-recipe` (upload), `create-recipe` and `rework-recipe` (food and unit names while writing, and update in place), `tandoor-food-cleanup` (food and unit merges) and `chef-onboarding` (offering Tandoor as the recipe target). It covers the one-time setup, the commands of the bundled script `tandoor.py`, the API facts the script relies on, and what Tandoor cannot hold. All HTTP goes through the script; never use `curl`, `wget`, and never read the `.env` file yourself (the script reads it) or put the token into a command line or the conversation.
 
 Every fact below is marked `from source, 2026-11-05` until it was confirmed on a live instance; then the mark reads `verified against <version>, <date>`. If the instance behaves differently, trust the instance, fix the script, and change the fact here.
 
 ## 1. Setup
 
-1. In Tandoor, open the user's API settings and create a token with the `read` and `write` scopes. A token with `read` only works for `check`, `recipes`, `pull`, `match`, `preview` and `foods-report`.
+1. In Tandoor, open the user's API settings and create a token with the `read` and `write` scopes. A token with `read` only works for `check`, `lookup`, `recipes`, `pull`, `match`, `preview` and `foods-report`.
 2. Put `TANDOOR_URL` (the address of the instance, with a sub-path if it has one) and `TANDOOR_API_TOKEN` as `KEY=value` lines into the `.env` file in the root of the project where the skills run, and make sure `.env` is in that project's `.gitignore`. The script reads the file from the working directory; if either variable is set in the environment, the environment is used for both and `.env` is ignored. The token stays out of the chat.
 3. Run `check`. It prints `OK: <url>, Tandoor <version>` and exits 0. Exit 3 means a variable is missing, exit 1 means the instance answered with an error (the message says which).
 
@@ -23,6 +23,7 @@ Run as `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py" <command> ..
 | `resolve <plan.json> --kind food\|unit\|keyword --text <text> (--id <n> \| --create)`                                                | Settles one open decision: use an existing entry, or create a new one                                                                                            |
 | `preview <plan.json>`                                                                                                                | Shows steps with attached ingredients, new entries, existing recipes with that name, then `Confirm: <code>`; exits 1 while anything is open or a problem remains |
 | `upload <plan.json> --confirm <code> [--allow-duplicate]`                                                                            | Creates the new entries, then the recipe (or updates it in place), then reads it back and prints differences                                                     |
+| `lookup [--food <text>...] [--unit <text>...]` | Read-only: prints, per text, the database name it would use (exact name, plural or alias), similar entries, or that it is not in the database |
 | `recipes [--query <text>] [--limit 25]`                                                                                              | Lists `<id>  <name>`, with `[cc-chef]` on recipes that carry the marker keyword                                                                                  |
 | `pull <id> -o <backup.json>`                                                                                                         | Saves the raw recipe (refuses to overwrite an existing file), prints it as text plus the `tandoor-id` and `tandoor-updated-at` frontmatter lines                                                         |
 | `foods-report -o <report.json>`                                                                                                      | Reads all foods, units, conversions and aliases; writes duplicate groups and polluted names to the file; prints only counts                                      |
@@ -31,6 +32,15 @@ Run as `python3 "${CLAUDE_SKILL_DIR}/../_shared/scripts/tandoor.py" <command> ..
 | `group-apply <plan.json> --confirm <code>`                                                                                           | Runs the operations in order and stops at the first failure                                                                                                      |
 
 The plan is a JSON file the script writes and reads; skills never edit it by hand. A plan is bound to the instance it was made for and is refused when `TANDOOR_URL` points somewhere else.
+
+### Writing with the database's names
+
+`create-recipe` and `rework-recipe` do this once the ingredient list is settled and before the recipe is shown, so the upload later finds confident matches and creates no near-duplicate foods or units. It applies whenever a connection works, whatever `Recipe target` says, and it changes nothing in Tandoor.
+
+1. Run `check`. Any failure, including exit 3, ends this procedure silently: most users have no Tandoor, and a broken connection is not the reason they asked for a recipe.
+2. Run `lookup --food <each food name> --unit <each unit>` once, with the food names as written in the ingredient lines (no preparation or qualifier) and each distinct unit.
+3. For `use '<name>'`, write exactly that name in the ingredient line. For `similar`, switch only when it is plainly the same food or unit in the same language; otherwise keep your own name, because `export-recipe` asks about it at upload. `not in the database` stays as written. Never change what the ingredient is, only how it is named, and keep the amount.
+4. Do not mention the lookup unless a name changed in a way the user would notice; then one short line.
 
 ## 3. How the script keeps its promises
 

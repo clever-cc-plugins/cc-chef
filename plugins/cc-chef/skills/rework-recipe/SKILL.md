@@ -23,7 +23,7 @@ argument-hint: "[optional: recipe text, a URL, a photo path or a saved recipe fi
 
 @../\_shared/recipe-format.md **Read when:** placing the source line, the original values and the conversion convention in the saved file (frontmatter `source` and `source-url`, the notes section)
 
-@../\_shared/tandoor-api.md **Read when:** the source is a Tandoor recipe, or a call to `tandoor.py` fails or prints something unexpected
+@../\_shared/tandoor-api.md **Read when:** the source is a Tandoor recipe, a Tandoor connection might exist ("Writing with the database's names" in section 2), or a call to `tandoor.py` fails or prints something unexpected
 
 # Rework Recipe
 
@@ -64,6 +64,8 @@ Free changes are made silently, as long as no warning, cue, temperature or reser
 Recipe changes are each flagged: volume to weight with ingredient-specific densities, regional unit conversion, °F to °C (give the conventional and the fan value, `recipe-writing.md` section 5.1), scaling (never linear for time, salt, leavening or reductions), a changed oven mode or pan, substitutions (say what changes, using `cooking-from-what-is-on-hand.md` section 6) and guideline adaptations. Take every number from a documented source in `recipe-writing.md`, round without drift, and label what you could not verify as not retested. A conversion that depends on how the ingredient is packed or cut (flour, brown sugar, chopped nuts) uses the form named in the source.
 
 Rewrite the method in neutral wording of your own. Drop the source headnote and personal story; do not paraphrase them closely. Never copy method prose, photos or distinctive wording.
+
+Once the ingredients are settled, name foods and units after the user's Tandoor database where a connection works, following "Writing with the database's names" in `tandoor-api.md` section 2. A Tandoor source recipe already carries database names; keep them.
 
 Build the result as one structured model: title, language, servings, times, tags, oven mode and temperatures, ordered steps that each carry the ingredients they use (an ingredient used in two steps is split between them), and notes. `export-recipe` saves exactly this.
 

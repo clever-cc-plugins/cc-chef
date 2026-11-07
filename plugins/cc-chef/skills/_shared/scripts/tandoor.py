@@ -155,6 +155,26 @@ def _cmd_resolve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_lookup(args: argparse.Namespace) -> int:
+    client = tc.Client(tc.load_config())
+    automations = [a for a in client.list_all("api/automation/") if not a.get("disabled")]
+    for kind, texts in (("food", args.food), ("unit", args.unit)):
+        if not texts:
+            continue
+        index = tmatch.build_index(
+            client.list_all(f"api/{kind}/"), [a for a in automations if a.get("type") == ALIAS_TYPES[kind]]
+        )
+        for text in texts:
+            m = tmatch.match(text, index)
+            if m["status"] in ("exact", "alias"):
+                print(f"{kind} '{text}': use '{m['name']}'")
+            elif m["candidates"]:
+                print(f"{kind} '{text}': no confident match, similar: " + "; ".join(f"'{c['name']}'" for c in m["candidates"]))
+            else:
+                print(f"{kind} '{text}': not in the database")
+    return 0
+
+
 def _cmd_recipes(args: argparse.Namespace) -> int:
     client = tc.Client(tc.load_config())
     params = {"page_size": min(args.limit, 100)}
@@ -535,6 +555,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--confirm")
     p.add_argument("--allow-duplicate", action="store_true")
     p.set_defaults(func=_cmd_upload)
+    p = sub.add_parser("lookup", help="read-only: show which database name each food or unit text would use")
+    p.add_argument("--food", nargs="+", default=[])
+    p.add_argument("--unit", nargs="+", default=[])
+    p.set_defaults(func=_cmd_lookup)
     p = sub.add_parser("recipes", help="list recipes; shows which carry the cc-chef marker")
     p.add_argument("--query")
     p.add_argument("--limit", type=int, default=25)

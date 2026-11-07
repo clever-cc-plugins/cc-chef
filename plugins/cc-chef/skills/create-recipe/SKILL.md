@@ -23,6 +23,8 @@ argument-hint: "[optional: ingredients, a mood, a dish name, or a photo path]"
 
 @../\_shared/recipe-format.md **Read when:** checking that the finished recipe carries every field the saved file needs (frontmatter keys, steps with their own ingredients, notes)
 
+@../\_shared/tandoor-api.md **Read when:** a Tandoor connection might exist: "Writing with the database's names" in section 2, or a call to `tandoor.py` fails or prints something unexpected
+
 # Create Recipe
 
 This skill turns a mood, an ingredient list, a photo or a named dish into ideas and then one full recipe of grounded everyday quality: comfort food, traditional fare, rustic home cooking, with one deliberate touch that makes it worth remembering; never experimental or star-chef. It follows `../_shared/skill-contract.md` (language, address form, tone and the hard-constraint check included); the steps below are its own work and its hand-off to `export-recipe`. Everything shown to the user is in the output language. The first reply opens with the contract's framing line (its Step 2), before any idea, question or recipe.
@@ -52,6 +54,8 @@ Offer 3 clearly different ideas by default, up to 5 when the user asks for more,
 ## Step 4: Write the full recipe
 
 Settle the open points first (`cooking-from-what-is-on-hand.md` section 8.5): servings (`Default servings`, else ask), usable amounts, equipment, any leftover-safety question, substitutions. Build the recipe as one structured model: title, language, servings, prep and cook times, tags, signature touch, oven mode and temperatures, ordered steps that each carry the ingredients they use (an ingredient used in two steps is split between them), and notes, plus `source` and `source-url` when a found web recipe was adapted (`recipe-writing.md` section 8.4). `export-recipe` saves exactly this, so keep the step-ingredient links whatever the chat layout.
+
+Once the ingredients are settled, name foods and units after the user's Tandoor database where a connection works, following "Writing with the database's names" in `tandoor-api.md` section 2.
 
 Lean the recipe toward registered soft targets and guideline preferences too, meeting per-person targets through branches (`nutrition-and-guidelines.md` section 5.2, rule 3), with no nutrition claims.
 
