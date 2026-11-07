@@ -9,6 +9,7 @@ from tandoor_model import normalize
 MAYBE_RATIO = 0.9
 _QTY = re.compile(r"^\s*(\d+(?:[.,]\d+)?(?:/\d+)?)\s+(\S+)\s+(.+)$")
 _PAREN = re.compile(r"^(.*?)\s*\(([^)]*)\)\s*$")
+_PLURAL_MARKER = re.compile(r"^(.*\w)\(\w{1,3}\)$")  # Möhre(n), Zehe(n): no space before the bracket
 
 
 def split_food_name(name: str, unit_names: set[str]) -> tuple[str, str | None]:
@@ -22,6 +23,9 @@ def split_food_name(name: str, unit_names: set[str]) -> tuple[str, str | None]:
     rest, _, tail = rest.partition(", ")
     if tail.strip():
         details.append(tail.strip())
+    m = _PLURAL_MARKER.match(rest)
+    if m:
+        rest = m.group(1)
     m = _PAREN.match(rest)
     if m and m.group(1):
         rest = m.group(1)
@@ -165,7 +169,7 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
     """Plan the note moves, merges, rename and aliases for one approved group.
 
     `report` holds the entries to act on (refreshed from the live instance by the caller), `ingredients` maps a
-    food id to its ingredients, `details` maps an id to a hand-written detail that replaces the one found in its name.
+    food id to its ingredients, `details` maps an id to a hand-written detail that replaces the one found in its name (an empty text means no detail).
     """
     entries = {e["id"]: e for e in report[kind + "s"]}
     keep_entry, sources = entries[keep], [entries[i] for i in merge if i in entries]
@@ -190,7 +194,7 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
     note_holders = sources + ([keep_entry] if rename else [])
     if kind == "food":
         for src in note_holders:
-            detail = details.get(src["id"]) or split_food_name(src["name"], unit_names)[1]
+            detail = details[src["id"]] if src["id"] in details else split_food_name(src["name"], unit_names)[1]
             if not detail:
                 continue
             for item in ingredients.get(src["id"], []):

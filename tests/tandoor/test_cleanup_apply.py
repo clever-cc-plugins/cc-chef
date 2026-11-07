@@ -220,6 +220,10 @@ class ApplyTests(FakeCase):
         plan = self.make_plan("--detail", "2=fein gewürfelt")
         self.assertEqual({o["note"] for o in plan["ops"] if o["op"] == "note"}, {"grob, fein gewürfelt", "fein gewürfelt"})
 
+    def test_empty_detail_means_no_note(self):
+        plan = self.make_plan("--detail", "2=")
+        self.assertEqual([o for o in plan["ops"] if o["op"] == "note"], [])
+
     def test_rename_collision_blocked(self):
         self.make_plan("--rename", "Zwiebel", keep="2", merge="")
         self.blocked("already exists")

@@ -17,6 +17,9 @@ class PureTests(unittest.TestCase):
             ("200 g Mehl", ("Mehl", "200 g")),
             ("Mehl", ("Mehl", None)),
             ("2 EL Öl, kalt", ("Öl", "2 EL, kalt")),
+            ("Möhre(n)", ("Möhre", None)),  # plural marker, not a detail
+            ("Knoblauchzehe(n), geschält", ("Knoblauchzehe", "geschält")),
+            ("Tomaten(gewürfelt)", ("Tomaten", "gewürfelt")),  # longer than a plural marker: still a detail
             ("2 Eier", ("2 Eier", None)),  # a number without a known unit stays in the name
         ]:
             self.assertEqual(tcl.split_food_name(name, {"g", "EL"}), want, name)
