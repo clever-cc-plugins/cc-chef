@@ -52,7 +52,12 @@ class ClientTests(unittest.TestCase):
                 f.write('# c\nTANDOOR_URL=http://x/\nexport TANDOOR_API_TOKEN="tok"\n')
             cfg = tc.load_config({}, path)
             self.assertEqual((cfg.url, cfg.token), ("http://x", "tok"))
-            self.assertEqual(tc.load_config({"TANDOOR_API_TOKEN": "env"}, path).token, "env")
+            # a partly set environment is never completed from .env
+            with self.assertRaises(tc.NotConfigured):
+                tc.load_config({"TANDOOR_API_TOKEN": "env"}, path)
+            with self.assertRaises(tc.NotConfigured):
+                tc.load_config({"TANDOOR_URL": "http://other"}, path)
+            self.assertEqual(tc.load_config({"TANDOOR_URL": "http://o", "TANDOOR_API_TOKEN": "env"}, path).token, "env")
             with self.assertRaises(tc.NotConfigured):
                 tc.load_config({}, os.path.join(d, "missing.env"))
 

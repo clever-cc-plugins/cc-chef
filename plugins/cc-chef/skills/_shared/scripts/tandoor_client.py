@@ -1,8 +1,9 @@
 """HTTP client for a Tandoor instance (standard library only).
 
 Configuration comes only from TANDOOR_URL and TANDOOR_API_TOKEN, read from the
-.env file in the working directory (the project that uses the skill); variables
-already set in the environment take precedence. The token never appears in a
+.env file in the working directory (the project that uses the skill). If either
+variable is set in the environment, the environment is used for both and .env is
+ignored. The token never appears in a
 message: every error text goes through _scrub.
 """
 from __future__ import annotations
@@ -51,7 +52,9 @@ def _read_dotenv(path: str) -> dict:
 
 
 def load_config(env=os.environ, dotenv: str = ".env") -> Config:
-    env = {**_read_dotenv(dotenv), **env}
+    # URL and token come from one source as a pair, so a token is never sent to a URL from elsewhere
+    if not (env.get("TANDOOR_URL") or env.get("TANDOOR_API_TOKEN")):
+        env = _read_dotenv(dotenv)
     url, token = (env.get("TANDOOR_URL") or "").strip(), (env.get("TANDOOR_API_TOKEN") or "").strip()
     if not url or not token:
         raise NotConfigured("Tandoor is not configured: set TANDOOR_URL and TANDOOR_API_TOKEN in the .env file of this project")

@@ -7,7 +7,7 @@ Every fact below is marked `from source, 2026-11-05` until it was confirmed on a
 ## 1. Setup
 
 1. In Tandoor, open the user's API settings and create a token with the `read` and `write` scopes. A token with `read` only works for `check`, `recipes`, `pull`, `match`, `preview` and `foods-report`.
-2. Put `TANDOOR_URL` (the address of the instance, with a sub-path if it has one) and `TANDOOR_API_TOKEN` as `KEY=value` lines into the `.env` file in the root of the project where the skills run, and make sure `.env` is in that project's `.gitignore`. The script reads the file from the working directory; variables already set in the environment take precedence. The token stays out of the chat.
+2. Put `TANDOOR_URL` (the address of the instance, with a sub-path if it has one) and `TANDOOR_API_TOKEN` as `KEY=value` lines into the `.env` file in the root of the project where the skills run, and make sure `.env` is in that project's `.gitignore`. The script reads the file from the working directory; if either variable is set in the environment, the environment is used for both and `.env` is ignored. The token stays out of the chat.
 3. Run `check`. It prints `OK: <url>, Tandoor <version>` and exits 0. Exit 3 means a variable is missing, exit 1 means the instance answered with an error (the message says which).
 
 If the user pastes a token into the conversation: do not repeat it, do not store it, and tell them to create a new one and revoke the pasted one.
