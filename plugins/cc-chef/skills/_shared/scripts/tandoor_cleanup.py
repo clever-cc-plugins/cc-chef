@@ -8,6 +8,9 @@ from tandoor_model import normalize
 
 MAYBE_RATIO = 0.9
 _QTY = re.compile(r"^\s*(\d+(?:[.,]\d+)?(?:/\d+)?)\s+(\S+)\s+(.+)$")
+_MEASURES = {"zehe", "zehen", "zweig", "zweige", "stiel", "stiele", "bund", "kopf", "dose", "dosen", "scheibe", "scheiben", "stück", "tl", "el"}
+_LEADING_MEASURE = re.compile(r"^([^\s,/]{2,})(?:/\w+)?(?:,\s*\S+)?\s+(\S.*)$")  # "Kopf Weißkohl", "Dose/n Mais", "TL, gehäuft Dill"
+_FUSED_MEASURE = re.compile(r"^(\w{3,}?)(zehen?|zweige?|stiele?)$", re.IGNORECASE)  # "Knoblauchzehe", "Rosmarinzweig"
 _PAREN = re.compile(r"^(.*?)\s*\(([^)]*)\)\s*$")
 _PLURAL_MARKER = re.compile(r"^(.*\w)\(\w{1,3}\)$")  # Möhre(n), Zehe(n): no space before the bracket
 
@@ -35,16 +38,32 @@ def split_food_name(name: str, unit_names: set[str]) -> tuple[str, str | None]:
     return rest.strip(), ", ".join(d for d in details if d) or None
 
 
+def food_core(name: str, unit_names: set[str]) -> tuple[str, str | None]:
+    """(core, measure): the plain food name and the measure word that sat in front of or inside it, if any.
+
+    A measure is a unit name or one of `_MEASURES`; the ingredient's unit is not touched by a merge."""
+    known = _MEASURES | {normalize(u) for u in unit_names}
+    name, measure = name.strip(), None
+    m = _LEADING_MEASURE.match(name)
+    if m and normalize(m.group(1)) in known:
+        measure, name = m.group(1), m.group(2)
+    core = split_food_name(name, unit_names)[0]
+    m = _FUSED_MEASURE.match(core)
+    if m and not measure:
+        core, measure = m.group(1), m.group(2)
+    return core, measure
+
+
 def suggest_keep(members: list[dict]) -> int:
-    """Properties first, then open-data slug, then most recipes, then shortest name, then lowest id."""
+    """No measure in the name first, then properties, open-data slug, most recipes, shortest name, lowest id."""
     return min(
         members,
-        key=lambda m: (not m.get("properties"), not m.get("open_data_slug"), -(m.get("numrecipe") or 0), len(m["name"]), m["id"]),
+        key=lambda m: (bool(m.get("measure")), not m.get("properties"), not m.get("open_data_slug"), -(m.get("numrecipe") or 0), len(m["name"]), m["id"]),
     )["id"]
 
 
 def _keys(entry: dict, kind: str, unit_names: set[str]) -> set[str]:
-    core = split_food_name(entry["name"], unit_names)[0] if kind == "food" else entry["name"]
+    core = food_core(entry["name"], unit_names)[0] if kind == "food" else entry["name"]
     keys = {normalize(core)}
     if entry.get("plural_name"):
         keys.add(normalize(entry["plural_name"]))
@@ -61,6 +80,8 @@ def duplicate_groups(entries: list[dict], unit_names: set[str], kind: str = "foo
     """`same`: equal core name or plural. `maybe`: near-identical names, offering the best entry of each cluster.
 
     `enrich(members)` runs before an entry is picked, to add data the lists lack (`numrecipe`)."""
+    if kind == "food":
+        entries = [{**e, "measure": m} if (m := food_core(e["name"], unit_names)[1]) else e for e in entries]
     parent = list(range(len(entries)))
 
     def find(i: int) -> int:
@@ -226,6 +247,14 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
         if a.get("type") == alias_type and normalize(a.get("param_2") or "") in gone and normalize(a["param_2"]) != normalize(target_name):
             ops.append({"op": "repoint-alias", "id": a["id"], "target": target_name})
 
+    if kind == "food":
+        for holder in note_holders:
+            measure = food_core(holder["name"], unit_names)[1]
+            if measure:
+                warnings.append(
+                    f"'{holder['name']}' names the measure '{measure}': the script does not change the unit of its ingredients, "
+                    f"so recipes may read '2 {target_name}' instead of '2 {measure} {target_name}'; check them by hand"
+                )
     for src in sources:
         props = len(src.get("properties") or [])
         if props:

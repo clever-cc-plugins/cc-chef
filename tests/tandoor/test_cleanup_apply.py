@@ -227,6 +227,14 @@ class ApplyTests(FakeCase):
         self.assertEqual(self.apply().returncode, 0)
         self.assertEqual(self.fake.db["food"][0]["plural_name"], "Zwiebeln")
 
+    def test_merge_warns_that_the_unit_is_not_changed(self):
+        self.fake.db["food"] += [
+            {"id": 8, "name": "Knoblauch", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None},
+            {"id": 9, "name": "Knoblauchzehe", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None},
+        ]
+        plan = self.make_plan(keep="8", merge="9")
+        self.assertTrue(any("Knoblauchzehe" in w and "zehe" in w and "unit" in w for w in plan["warnings"]), plan["warnings"])
+
     def test_empty_detail_means_no_note(self):
         plan = self.make_plan("--detail", "2=")
         self.assertEqual([o for o in plan["ops"] if o["op"] == "note"], [])

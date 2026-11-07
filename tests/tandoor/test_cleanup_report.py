@@ -24,6 +24,27 @@ class PureTests(unittest.TestCase):
         ]:
             self.assertEqual(tcl.split_food_name(name, {"g", "EL"}), want, name)
 
+    def test_food_core_strips_measures(self):
+        for name, want in [
+            ("Knoblauchzehe(n)", ("Knoblauch", "zehe")),
+            ("Knoblauchzehen", ("Knoblauch", "zehen")),
+            ("Rosmarinzweig", ("Rosmarin", "zweig")),
+            ("Kopf Weißkohl", ("Weißkohl", "Kopf")),
+            ("Dose/n Mais", ("Mais", "Dose")),
+            ("TL, gehäuft Dill", ("Dill", "TL")),
+            ("Prise Salz", ("Salz", "Prise")),  # a unit of the instance
+            ("Kopfsalat", ("Kopfsalat", None)),  # a measure word inside a real food name stays
+            ("Zehe", ("Zehe", None)),
+            ("Knoblauch", ("Knoblauch", None)),
+        ]:
+            self.assertEqual(tcl.food_core(name, {"Prise"}), want, name)
+
+    def test_measure_food_joins_the_plain_food_and_loses_the_keep_vote(self):
+        g = self.groups([food(1, "Knoblauch", props=True, slug="x"), food(2, "Knoblauchzehe", props=True, n=9), food(3, "Knoblauchzehen", n=5)])
+        self.assertEqual((len(g), g[0]["keep"]), (1, 1))
+        g = self.groups([food(2, "Knoblauchzehe", props=True, n=9), food(1, "Knoblauch")])
+        self.assertEqual(g[0]["keep"], 1)  # even without properties, the entry without a measure wins
+
     def groups(self, entries, kind="food"):
         return tcl.duplicate_groups(entries, {"g"}, kind)
 

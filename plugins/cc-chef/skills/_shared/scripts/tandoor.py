@@ -235,9 +235,10 @@ def _cmd_foods_report(args: argparse.Namespace) -> int:
         groups += [{"id": f"{kind[0]}{n}", **g} for n, g in enumerate(found, 1)]
     polluted = []
     for f in foods:
-        core, details = tcl.split_food_name(f["name"], unit_names)
-        if details:
-            polluted.append({"id": f["id"], "name": f["name"], "core": core, "details": details})
+        details = tcl.split_food_name(f["name"], unit_names)[1]
+        core, measure = tcl.food_core(f["name"], unit_names)
+        if details or measure:
+            polluted.append({"id": f["id"], "name": f["name"], "core": core, "details": details, "measure": measure})
     _save(args.output, {
         "base_url": client.config.url, "foods": foods, "units": units, "groups": groups,
         "polluted": polluted, "conversions": conversions, "aliases": aliases,
