@@ -1,13 +1,13 @@
 # Tandoor API reference
 
-Use this file for everything that touches a user's Tandoor instance: `export-recipe` (upload), `rework-recipe` (update in place), `tandoor-food-cleanup` (food and unit merges) and `chef-onboarding` (offering Tandoor as the recipe target). It covers the one-time setup, the commands of the bundled script `tandoor.py`, the API facts the script relies on, and what Tandoor cannot hold. All HTTP goes through the script; never use `curl`, `wget` or a `.env` file, and never put the token into a file, a command line or the conversation.
+Use this file for everything that touches a user's Tandoor instance: `export-recipe` (upload), `rework-recipe` (update in place), `tandoor-food-cleanup` (food and unit merges) and `chef-onboarding` (offering Tandoor as the recipe target). It covers the one-time setup, the commands of the bundled script `tandoor.py`, the API facts the script relies on, and what Tandoor cannot hold. All HTTP goes through the script; never use `curl`, `wget`, and never read the `.env` file yourself (the script reads it) or put the token into a command line or the conversation.
 
 Every fact below is marked `from source, 2026-11-05` until it was confirmed on a live instance; then the mark reads `verified against <version>, <date>`. If the instance behaves differently, trust the instance, fix the script, and change the fact here.
 
 ## 1. Setup
 
 1. In Tandoor, open the user's API settings and create a token with the `read` and `write` scopes. A token with `read` only works for `check`, `recipes`, `pull`, `match`, `preview` and `foods-report`.
-2. Set `TANDOOR_URL` (the address of the instance, with a sub-path if it has one) and `TANDOOR_TOKEN` in the shell that starts Claude Code, then restart Claude Code. A keychain-backed shell function or `direnv` outside the project is a good place. The token stays out of the project and out of the chat.
+2. Put `TANDOOR_URL` (the address of the instance, with a sub-path if it has one) and `TANDOOR_API_TOKEN` as `KEY=value` lines into the `.env` file in the root of the project where the skills run, and make sure `.env` is in that project's `.gitignore`. The script reads the file from the working directory; variables already set in the environment take precedence. The token stays out of the chat.
 3. Run `check`. It prints `OK: <url>, Tandoor <version>` and exits 0. Exit 3 means a variable is missing, exit 1 means the instance answered with an error (the message says which).
 
 If the user pastes a token into the conversation: do not repeat it, do not store it, and tell them to create a new one and revoke the pasted one.

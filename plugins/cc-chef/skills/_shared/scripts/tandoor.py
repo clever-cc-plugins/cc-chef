@@ -513,7 +513,7 @@ def _cmd_upload(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="cc-chef Tandoor tool")
     sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("check", help="verify TANDOOR_URL and TANDOOR_TOKEN")
+    p = sub.add_parser("check", help="verify TANDOOR_URL and TANDOOR_API_TOKEN")
     p.set_defaults(func=_cmd_check)
     p = sub.add_parser("match", help="match a recipe file to the database and write a plan")
     p.add_argument("recipe")

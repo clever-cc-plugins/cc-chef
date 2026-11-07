@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 import subprocess
 import sys
 import unittest
@@ -8,6 +9,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parents[1] / "plugins" / "cc-chef" / "skills" / "_shared" / "scripts"
 TOOL = SCRIPTS / "tandoor.py"
+NO_DOTENV = "/nonexistent/.env"
 sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(HERE))
 
@@ -29,8 +31,9 @@ def cli(url, *args, token=TOKEN):
     if url is not None:
         env["TANDOOR_URL"] = url
     if token is not None:
-        env["TANDOOR_TOKEN"] = token
-    return subprocess.run([sys.executable, str(TOOL), *args], capture_output=True, text=True, env=env)
+        env["TANDOOR_API_TOKEN"] = token
+    with tempfile.TemporaryDirectory() as cwd:  # empty, so a real .env in the repo is never read
+        return subprocess.run([sys.executable, str(TOOL), *args], capture_output=True, text=True, env=env, cwd=cwd)
 
 
 class ClientTests(unittest.TestCase):
@@ -40,13 +43,24 @@ class ClientTests(unittest.TestCase):
         self.addCleanup(self.fake.stop)
 
     def client(self, url=None, token=TOKEN):
-        return tc.Client(tc.load_config({"TANDOOR_URL": url or self.url, "TANDOOR_TOKEN": token}))
+        return tc.Client(tc.load_config({"TANDOOR_URL": url or self.url, "TANDOOR_API_TOKEN": token}))
+
+    def test_config_from_dotenv_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, ".env")
+            with open(path, "w") as f:
+                f.write('# c\nTANDOOR_URL=http://x/\nexport TANDOOR_API_TOKEN="tok"\n')
+            cfg = tc.load_config({}, path)
+            self.assertEqual((cfg.url, cfg.token), ("http://x", "tok"))
+            self.assertEqual(tc.load_config({"TANDOOR_API_TOKEN": "env"}, path).token, "env")
+            with self.assertRaises(tc.NotConfigured):
+                tc.load_config({}, os.path.join(d, "missing.env"))
 
     def test_missing_env_raises_not_configured(self):
         with self.assertRaises(tc.NotConfigured):
-            tc.load_config({"TANDOOR_URL": "http://x"})
+            tc.load_config({"TANDOOR_URL": "http://x"}, NO_DOTENV)
         with self.assertRaises(tc.NotConfigured):
-            tc.load_config({"TANDOOR_TOKEN": "t"})
+            tc.load_config({"TANDOOR_API_TOKEN": "t"}, NO_DOTENV)
 
     def test_base_url_subpath(self):
         self.client(self.url + "/recipes/").get("api/food/")
@@ -116,8 +130,18 @@ class ClientTests(unittest.TestCase):
         for e, secret in errors:
             self.assertNotIn(secret, str(e))
             self.assertNotIn(secret, repr(e))
-        cfg = tc.load_config({"TANDOOR_URL": self.url, "TANDOOR_TOKEN": "s3cret"})
+        cfg = tc.load_config({"TANDOOR_URL": self.url, "TANDOOR_API_TOKEN": "s3cret"})
         self.assertNotIn("s3cret", repr(cfg))
+
+    def test_cli_reads_dotenv_in_working_directory(self):
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, ".env"), "w") as f:
+                f.write(f"TANDOOR_URL={self.url}\nTANDOOR_API_TOKEN={TOKEN}\n")
+            env = {k: v for k, v in os.environ.items() if not k.startswith("TANDOOR_")}
+            r = subprocess.run([sys.executable, str(TOOL), "check"], capture_output=True, text=True, env=env, cwd=d)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("OK:", r.stdout)
+        self.assertNotIn(TOKEN, r.stdout + r.stderr)
 
     def test_check_cli(self):
         r = cli(self.url, "check")

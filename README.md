@@ -106,7 +106,7 @@ If you run [Tandoor](https://tandoor.dev), cc-chef can work with it directly, an
 Setup, once:
 
 1. In Tandoor, create an API token with the `read` and `write` scopes.
-2. Set `TANDOOR_URL` (the address of your instance) and `TANDOOR_TOKEN` in the shell that starts Claude Code, for example from a keychain-backed shell function, and restart Claude Code. Do not put the token into a project file or paste it into the chat.
+2. In the project where you use the skills, put `TANDOOR_URL` (the address of your instance) and `TANDOOR_API_TOKEN` into a `.env` file and make sure `.env` is in that project's `.gitignore`. Do not paste the token into the chat.
 3. Run `/cc-chef:chef-onboarding` and pick `tandoor` as the recipe target, or ask `export-recipe` for Tandoor directly. It checks the connection first.
 
 Python 3 is needed; the script uses only its standard library, so there is nothing to install.

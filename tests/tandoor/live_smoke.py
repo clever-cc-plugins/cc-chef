@@ -4,7 +4,7 @@ Not a unittest: the file name keeps it out of `discover`.
 
     python3 tests/tandoor/live_smoke.py --run [--report FILE]
 
-Needs TANDOOR_URL and TANDOOR_TOKEN (write scope) in the environment. It drives the real
+Needs TANDOOR_URL and TANDOOR_API_TOKEN (write scope) in the environment. It drives the real
 `tandoor.py` CLI (match, preview, upload, pull), creates one recipe `cc-chef-test-<date>` and a few
 foods, and deletes them again in `finally`. Use a test instance.
 """

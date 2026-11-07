@@ -24,8 +24,9 @@ def cli(url, *args, token=TOKEN):
     if url is not None:
         env["TANDOOR_URL"] = url
     if token is not None:
-        env["TANDOOR_TOKEN"] = token
-    return subprocess.run([sys.executable, str(TOOL), *map(str, args)], capture_output=True, text=True, env=env)
+        env["TANDOOR_API_TOKEN"] = token
+    with tempfile.TemporaryDirectory() as cwd:  # empty, so a real .env in the repo is never read
+        return subprocess.run([sys.executable, str(TOOL), *map(str, args)], capture_output=True, text=True, env=env, cwd=cwd)
 
 
 class FakeCase(unittest.TestCase):

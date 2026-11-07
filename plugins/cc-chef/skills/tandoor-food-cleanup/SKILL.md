@@ -4,7 +4,7 @@ description: >
   Clean up the food and unit database of the user's Tandoor instance by
   merging duplicates group by group after approval. Invoke when the user says
   "clean up my Tandoor foods" or "Tandoor Zutaten aufräumen". Needs TANDOOR_URL and
-  TANDOOR_TOKEN; merges cannot be undone. Do NOT use it to upload (export-recipe)
+  TANDOOR_API_TOKEN; merges cannot be undone. Do NOT use it to upload (export-recipe)
   or restructure a recipe (rework-recipe).
 allowed-tools: Read, Write, Bash, Glob
 argument-hint: "[optional: food or unit to start with]"

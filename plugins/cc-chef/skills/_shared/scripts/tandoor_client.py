@@ -1,7 +1,9 @@
 """HTTP client for a Tandoor instance (standard library only).
 
-Configuration comes only from TANDOOR_URL and TANDOOR_TOKEN. The token never
-appears in a message: every error text goes through _scrub.
+Configuration comes only from TANDOOR_URL and TANDOOR_API_TOKEN, read from the
+.env file in the working directory (the project that uses the skill); variables
+already set in the environment take precedence. The token never appears in a
+message: every error text goes through _scrub.
 """
 from __future__ import annotations
 
@@ -30,10 +32,29 @@ class Config:
     token: str = field(repr=False)
 
 
-def load_config(env=os.environ) -> Config:
-    url, token = (env.get("TANDOOR_URL") or "").strip(), (env.get("TANDOOR_TOKEN") or "").strip()
+def _read_dotenv(path: str) -> dict:
+    values = {}
+    try:
+        lines = open(path, encoding="utf-8").read().splitlines()
+    except OSError:
+        return values
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip().removeprefix("export ").strip(), value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        values[key] = value
+    return values
+
+
+def load_config(env=os.environ, dotenv: str = ".env") -> Config:
+    env = {**_read_dotenv(dotenv), **env}
+    url, token = (env.get("TANDOOR_URL") or "").strip(), (env.get("TANDOOR_API_TOKEN") or "").strip()
     if not url or not token:
-        raise NotConfigured("Tandoor is not configured: set TANDOOR_URL and TANDOOR_TOKEN in the shell that starts Claude Code")
+        raise NotConfigured("Tandoor is not configured: set TANDOOR_URL and TANDOOR_API_TOKEN in the .env file of this project")
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise NotConfigured("TANDOOR_URL must start with http:// or https://, for example https://tandoor.example.com")
@@ -96,7 +117,7 @@ class Client:
         if 300 <= status < 400:
             return self._fail(f"{self.config.url} redirects to {e.headers.get('Location', '?')}; not followed so the token stays on this host: fix TANDOOR_URL", status)
         if status == 401:
-            return self._fail("the token was rejected (401): create a new one in Tandoor and set TANDOOR_TOKEN", status)
+            return self._fail("the token was rejected (401): create a new one in Tandoor and set TANDOOR_API_TOKEN in .env", status)
         if status == 403:
             hint = "the token needs the write scope" if method != "GET" else "the token lacks permission"
             return self._fail(f"forbidden (403): {hint}", status)

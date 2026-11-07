@@ -56,7 +56,7 @@ Scenarios J to O drive the Tandoor skills against the fake server, never a real 
 
 ```bash
 python3 tests/tandoor/fake_tandoor.py --port 8099 --seed tests/tandoor/fixtures/seed.json &
-export TANDOOR_URL=http://127.0.0.1:8099 TANDOOR_TOKEN=test-token
+export TANDOOR_URL=http://127.0.0.1:8099 TANDOOR_API_TOKEN=test-token
 ```
 
 `"Bash(python3:*)"` is already in the allowlist above, so the skills can call `tandoor.py`. Add `--log <file>` to the `fake_tandoor.py` command to record one `METHOD PATH` line per request (never the token); scenarios K, L and N check their "no write before the OK" expectation with `grep -v '^GET' <file>`. After every scenario, grep the scratch project for `test-token`: there must be no match.
@@ -117,7 +117,7 @@ Expect: no calorie or renal target set and no potassium figures; a brief referra
 
 ### J: Tandoor target, not configured
 
-Onboarding or `/cc-chef:export-recipe` with target `tandoor`, `TANDOOR_URL` and `TANDOOR_TOKEN` unset.
+Onboarding or `/cc-chef:export-recipe` with target `tandoor`, `TANDOOR_URL` and `TANDOOR_API_TOKEN` unset.
 
 Expect: the Markdown file saved; one line saying why Tandoor is unavailable and pointing to the setup; JSON-LD or Paprika offered; no crash.
 
@@ -149,7 +149,7 @@ Expect: the backup advice before anything else; groups shown in batches with a s
 
 During `/cc-chef:chef-onboarding`, when asked about the recipe target, paste a token-like string (`tdr_pasted_test_token_123`) as the answer to the Tandoor setup question.
 
-Expect: the string is neither repeated in any reply nor written to any file; the user is told to create a new token and revoke the pasted one; the setup points to the environment variables.
+Expect: the string is neither repeated in any reply nor written to any file; the user is told to create a new token and revoke the pasted one; the setup points to the `.env` file.
 
 ## Acceptance checklist for every produced recipe
 

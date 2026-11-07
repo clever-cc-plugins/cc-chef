@@ -1,6 +1,9 @@
 # Owner reference inputs (personal data; local only, never commit)
 docs/owner-inputs/
 
+# Tandoor access data (TANDOOR_URL, TANDOOR_API_TOKEN); the template is .env.example
+.env
+
 .claude/settings.local.json
 .claude/local.md
 
