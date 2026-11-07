@@ -306,7 +306,7 @@ def _cmd_group_plan(args: argparse.Namespace) -> int:
     if kind == "food":
         for i in [m for m in merge if m in live] + ([args.keep] if args.rename else []):
             ingredients[i] = client.list_all("api/ingredient/", {"food": i})  # ?simple=1 would drop used_in_recipes
-    plan = tcl.build_group_plan(state, kind, args.keep, [m for m in merge if m in live], details, ingredients, args.rename)
+    plan = tcl.build_group_plan(state, kind, args.keep, [m for m in merge if m in live], details, ingredients, args.rename, args.plural)
     _save(args.output, plan)
     print(f"Plan written: {args.output} ({len(plan['ops'])} operations, {len(plan['warnings'])} warnings, {len(plan['problems'])} problems)")
     return 0
@@ -321,6 +321,8 @@ def _describe_op(op: dict, plan: dict) -> str:
         return f"merge {plan['kind']} '{names[op['source']]}' (id {op['source']}) into '{names[op['target']]}' (id {op['target']})"
     if op["op"] == "rename":
         return f"rename '{names[op['id']]}' (id {op['id']}) to '{op['name']}'"
+    if op["op"] == "plural":
+        return f"set the plural name of '{names[op['id']]}' (id {op['id']}): '{op['before']}' -> '{op['name']}'"
     if op["op"] == "alias":
         return f"add alias: '{op['name']}' -> '{op['target']}'"
     return f"point alias {op['id']} at '{op['target']}'"
@@ -367,6 +369,8 @@ def _run_op(client: tc.Client, plan: dict, op: dict) -> None:
         client.put(f"api/{kind}/{op['source']}/merge/{op['target']}/")
     elif op["op"] == "rename":
         client.patch(f"api/{kind}/{op['id']}/", {"name": op["name"]})
+    elif op["op"] == "plural":
+        client.patch(f"api/{kind}/{op['id']}/", {"plural_name": op["name"]})
     elif op["op"] == "alias":
         client.post("api/automation/", {
             "type": tcl.ALIAS_TYPES[kind], "name": f"cc-chef: {op['name']}", "param_1": op["name"],
@@ -577,6 +581,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--merge", default="")
     p.add_argument("--detail", action="append", default=[])
     p.add_argument("--rename")
+    p.add_argument("--plural")
     p.add_argument("-o", "--output", required=True)
     p.set_defaults(func=_cmd_group_plan)
     p = sub.add_parser("group-preview", help="show what a group plan would do; prints the confirmation code")

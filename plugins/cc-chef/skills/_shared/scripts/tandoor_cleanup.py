@@ -165,8 +165,8 @@ def _involves(conversion: dict, kind: str, entry_id: int) -> bool:
     return entry_id in (_ref_id(conversion.get("base_unit")), _ref_id(conversion.get("converted_unit")))
 
 
-def build_group_plan(report, kind, keep, merge, details, ingredients, rename=None) -> dict:
-    """Plan the note moves, merges, rename and aliases for one approved group.
+def build_group_plan(report, kind, keep, merge, details, ingredients, rename=None, plural=None) -> dict:
+    """Plan the note moves, merges, rename, plural name and aliases for one approved group.
 
     `report` holds the entries to act on (refreshed from the live instance by the caller), `ingredients` maps a
     food id to its ingredients, `details` maps an id to a hand-written detail that replaces the one found in its name (an empty text means no detail).
@@ -182,8 +182,8 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
 
     if keep in merge:
         problems.append("the entry to keep is also listed as a source")
-    if not sources and not rename:
-        problems.append("nothing to do: no source entry is left and no --rename was given")
+    if not sources and not rename and not plural:
+        problems.append("nothing to do: no source entry is left and no --rename or --plural was given")
     if rename and any(e["id"] != keep and normalize(e["name"]) == normalize(rename) for e in report[kind + "s"]):
         problems.append(f"'{rename}' already exists: merge into it instead of renaming")
     if kind == "food":
@@ -212,6 +212,8 @@ def build_group_plan(report, kind, keep, merge, details, ingredients, rename=Non
         ops.append({"op": "merge", "source": src["id"], "target": keep})
     if rename:
         ops.append({"op": "rename", "id": keep, "name": rename})
+    if plural and plural != (keep_entry.get("plural_name") or ""):
+        ops.append({"op": "plural", "id": keep, "name": plural, "before": keep_entry.get("plural_name") or ""})
 
     existing = report["aliases"]
     for src in sources + ([keep_entry] if rename else []):  # a renamed keeper keeps its old name as an alias, like a merged source

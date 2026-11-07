@@ -220,6 +220,13 @@ class ApplyTests(FakeCase):
         plan = self.make_plan("--detail", "2=fein gewürfelt")
         self.assertEqual({o["note"] for o in plan["ops"] if o["op"] == "note"}, {"grob, fein gewürfelt", "fein gewürfelt"})
 
+    def test_plural_name_is_planned_previewed_and_applied(self):
+        plan = self.make_plan("--plural", "Zwiebeln")
+        self.assertIn({"op": "plural", "id": 1, "name": "Zwiebeln", "before": ""}, plan["ops"])
+        self.assertIn("'' -> 'Zwiebeln'", self.confirm()[1])
+        self.assertEqual(self.apply().returncode, 0)
+        self.assertEqual(self.fake.db["food"][0]["plural_name"], "Zwiebeln")
+
     def test_empty_detail_means_no_note(self):
         plan = self.make_plan("--detail", "2=")
         self.assertEqual([o for o in plan["ops"] if o["op"] == "note"], [])
