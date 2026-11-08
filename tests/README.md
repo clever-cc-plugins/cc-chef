@@ -2,7 +2,7 @@
 
 Two kinds of tests: unit tests for `recipe_tool.py` and the Tandoor scripts, and dry-run scenarios that drive the skills end to end in real Claude Code sessions.
 
-## Script tests
+## Script Tests
 
 Run from the repo root:
 
@@ -20,7 +20,7 @@ python3 -m unittest discover -s tests/tandoor -v
 
 They cover the HTTP client (redirects, login pages, token scrubbing, pagination), the recipe mapping, ingredient matching, the upload and in-place update flows with their preview and confirmation gates, and the food report and group merges. `tests/tandoor/live_smoke.py` is an opt-in check against a real instance (see the plan's Task 11); its file name keeps it out of `discover`.
 
-## Dry-run scenarios
+## Dry-Run Scenarios
 
 Each scenario runs in its own scratch project outside the repo: a fresh directory with an empty `CLAUDE.md` and only the files the scenario names. Never run them inside the repo, and never save scenario output under `tests/`.
 
@@ -50,7 +50,7 @@ Before the scenarios, run a smoke test: copy `tests/recipe-tool/fixtures/roulade
 
 For every recipe file a scenario produces, run `python3 plugins/cc-chef/skills/_shared/scripts/recipe_tool.py validate <file>` from the repo root, outside the nested session.
 
-### Dry runs against the fake Tandoor
+### Dry Runs Against the Fake Tandoor
 
 Scenarios J to O drive the Tandoor skills against the fake server, never a real instance. Start it from the repo root, then give the nested session its address and token through the environment (the session inherits them; unset any real `TANDOOR_*` first):
 
@@ -151,7 +151,7 @@ During `/cc-chef:chef-onboarding`, when asked about the recipe target, paste a t
 
 Expect: the string is neither repeated in any reply nor written to any file; the user is told to create a new token and revoke the pasted one; the setup points to the `.env` file.
 
-## Acceptance checklist for every produced recipe
+## Acceptance Checklist for Every Produced Recipe
 
 - Passes `recipe_tool.py validate`.
 - Salt in stages (in a base-plus-branch household, after the child's portion is set aside), an acid, an umami source where it fits, one named finishing touch, and times paired with visual cues (`culinary-craft.md` section 5.1).

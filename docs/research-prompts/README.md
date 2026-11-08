@@ -12,7 +12,7 @@ Ready-to-paste deep-research prompts that build the knowledge base for cc-chef's
 | 4   | [nutrition-and-personal-guidelines.md](nutrition-and-personal-guidelines.md) | Opt-in dietary guidelines and their boundaries                                             | Tools with access to scientific databases, plus a general tool       |
 | 5   | [recipe-app-formats.md](recipe-app-formats.md)                               | Export to recipe management apps                                                           | Any tool with good web search; technical docs and source code matter |
 
-## Using a prompt
+## Using a Prompt
 
 1. Open the prompt file.
 2. Paste the delimited prompt block into the deep-research feature of an AI tool (Claude, ChatGPT, Gemini, Perplexity, Consensus, Elicit, or similar). Running the same prompt in more than one tool and merging the results is encouraged, especially for prompt 4.
