@@ -38,7 +38,7 @@ A food list registered by the user takes precedence over generic nutrient data.
 
 ## The sequence
 
-0. **Recall learnings** (silent): read `.claude/learnings.md` if present, across all plugin tags. Apply relevant observations. Never announce this step; surface nothing unless it changes behaviour.
+0. **Recall learnings** (silent): read `learnings-protocol.md` in this `_shared/` folder and follow its **Recall** section.
 1. **Load context**: enrichment, never gating. Read the preferences, any registered guidelines and food lists, matched by Summary. If nothing matching is registered, do not block and do not interrogate: ask only what the task cannot proceed without (for example servings) and use defaults for the rest. Hard constraints are checked before any idea or recipe is shown, even when no guideline is registered. Their sources are the preferences' `Allergies and hard exclusions` field or allergies and exclusions named in the request, the `Household` life stages or life stages named in the request (applying the life-stage rules in `nutrition-and-guidelines.md`) and registered guidelines. A conflicting idea is never offered, or is adapted and says so. They are never relaxed for flavour.
 
    In every recipe-producing skill, apply the referral behaviour of `nutrition-and-guidelines.md` sections 6.1 and 6.2, with no disclaimer added. A request for a calorie, weight or carbohydrate-for-insulin target, or for a renal or other condition-specific diet, gets no such target: say so briefly, refer to a doctor or registered dietitian, and still offer to cook a normal dish.
@@ -50,26 +50,9 @@ A food list registered by the user takes precedence over generic nutrient data.
 
 ### Step 5: Feedback and learnings
 
-Auto-store phase. Before asking for feedback, review the run. For each qualifying observation, append one tagged line to `.claude/learnings.md` (create it with the standard header if missing):
-
-```text
-[cc-chef:<skill>] <concise observation> — <YYYY-MM-DD>
-```
-
-Qualifies: recurring preferences not already in the context files (for example "always wants the oven temperature in Celsius and Fahrenheit"); corrections the user made. Does not qualify: standard behaviour applied without deviation; facts already in context files or `CLAUDE.md`; facts equivalent to an existing entry under any plugin tag. When in doubt, skip.
-
-Check for the file before appending: `ls .claude/learnings.md 2>/dev/null && echo "exists" || echo "missing"`. Standard header when creating it:
-
-```markdown
-# Learnings
-
-Corrections and feedback collected during sessions.
-Entries are tagged by skill and dated.
-
----
-```
+Auto-store phase. Before asking for feedback, review the run. Read `learnings-protocol.md` in this `_shared/` folder and follow its **Writing** section. Tag entries `[cc-chef:<skill>]`; the source is `inferred` unless the user said it. Worth recording: recurring preferences not already in the context files, for example the oven temperature in both °C and °F.
 
 Explicit feedback. After the auto-store phase, ask once, in the output language: "Does this work for you? Any corrections, or press Enter to finish."
 
-- If the user corrects something: append it as a tagged entry under the same criteria and confirm how many learnings were saved.
-- If the user confirms or skips: if entries were auto-stored, confirm that, then finish. If nothing was stored, finish without comment.
+- If the user corrects something: record it per the protocol's **Writing** section with source `corrected`.
+- Then follow the protocol's **Confirming** section, then finish. If nothing was written, finish without comment.

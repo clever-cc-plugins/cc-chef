@@ -6,7 +6,7 @@ description: >
   "clean up my Tandoor foods" or "Tandoor Zutaten aufräumen". Needs TANDOOR_URL and
   TANDOOR_API_TOKEN; merges and deletions cannot be undone. Do NOT use it to upload (export-recipe)
   or restructure a recipe (rework-recipe).
-allowed-tools: Read, Write, Bash, Glob
+allowed-tools: Read, Write, Edit, Bash, Glob
 argument-hint: "[optional: food or unit to start with]"
 ---
 
