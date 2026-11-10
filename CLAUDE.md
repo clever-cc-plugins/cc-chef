@@ -41,7 +41,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 
 ## Learnings
 
-When the user corrects a mistake or points out a recurring issue, append a one-line summary to `.claude/learnings.md`. Don't modify `CLAUDE.md` directly.
+When the user corrects a mistake or points out a recurring issue, record a one-line summary in `.claude/learnings.md` by `plugins/cc-chef/skills/_shared/learnings-protocol.md`: add a source marker, and replace a contradicted entry instead of appending a second one. Don't modify `CLAUDE.md` directly.
 
 ## Compact Instructions
 
