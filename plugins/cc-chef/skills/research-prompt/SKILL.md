@@ -6,7 +6,7 @@ description: >
   diet" or "Recherche-Prompt für eine Ernährungsform". Produces only the prompt
   text: no research, no saving. Do NOT use it to write the guideline from results
   (dietary-guidelines).
-allowed-tools: Read, Write, Bash
+allowed-tools: Read, Write, Edit, Bash
 argument-hint: "[optional: diet, intolerance, practice or constraint to research]"
 ---
 
