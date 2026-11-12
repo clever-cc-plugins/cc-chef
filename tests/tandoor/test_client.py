@@ -5,6 +5,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parents[1] / "plugins" / "cc-chef" / "skills" / "_shared" / "scripts"
@@ -147,6 +148,51 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("OK:", r.stdout)
         self.assertNotIn(TOKEN, r.stdout + r.stderr)
+
+    def test_a_read_is_repeated_after_a_dropped_connection(self):
+        client = self.client()
+        client.retry_delay = 0
+        self.fake.drop = 2
+        self.assertEqual(client.get("api/server-settings/current/")["version"], "2.7.2")
+        self.assertEqual(self.fake.drop, 0)
+
+    def test_a_read_gives_up_after_three_attempts(self):
+        client = self.client()
+        client.retry_delay = 0
+        self.fake.drop = 4
+        with self.assertRaisesRegex(tc.TandoorError, "cannot reach"):
+            client.get("api/server-settings/current/")
+        self.assertEqual(self.fake.drop, 1)
+
+    def test_a_write_is_never_repeated(self):
+        client = self.client()
+        client.retry_delay = 0
+        self.fake.drop = 2
+        with self.assertRaisesRegex(tc.TandoorError, "cannot reach"):
+            client.post("api/food/", {"name": "Test"})
+        self.assertEqual(self.fake.drop, 1)
+
+    def test_an_error_answer_is_not_repeated(self):
+        client = self.client(token="wrong")
+        client.retry_delay = 0
+        with self.assertRaises(tc.TandoorError) as caught:
+            client.get("api/food/")
+        self.assertEqual(caught.exception.status, 401)
+        self.assertEqual(len([r for r in self.fake.requests if r["path"].endswith("/api/food/")]), 1)
+
+    def test_a_read_pauses_one_then_two_seconds_between_attempts(self):
+        self.fake.drop = 2
+        with mock.patch.object(tc.time, "sleep") as sleep:
+            self.client().get("api/server-settings/current/")
+        self.assertEqual([c.args[0] for c in sleep.call_args_list], [1, 2])
+
+    def test_a_timeout_counts_as_no_answer(self):
+        client = self.client()
+        client.retry_delay = 0
+        with mock.patch.object(client._opener, "open", side_effect=TimeoutError("timed out")) as opened:
+            with self.assertRaisesRegex(tc.TandoorError, "cannot reach"):
+                client.get("api/server-settings/current/")
+        self.assertEqual(opened.call_count, 3)
 
     def test_check_cli(self):
         r = cli(self.url, "check")

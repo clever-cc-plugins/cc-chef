@@ -8,6 +8,7 @@ import argparse
 import copy
 import json
 import re
+import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
@@ -23,6 +24,7 @@ class FakeTandoor:
         self.db = {c: copy.deepcopy(seed.get(c, [])) for c in COLLECTIONS}
         self.requests: list[dict] = []
         self.read_only = False  # writes answer 403
+        self.drop = 0  # the next n requests are closed without an answer, like a reset connection
         self.redirect_to: str | None = None  # every request answers 301 to this URL
         self.html_everywhere = False  # every path answers 200 text/html
         self.canned: list[tuple[str, str, int, object]] = []  # (method, path substring, status, body), used once
@@ -40,6 +42,10 @@ class FakeTandoor:
                 pass
 
             def _serve(self):
+                if fake.drop:
+                    fake.drop -= 1
+                    self.connection.shutdown(socket.SHUT_RDWR)  # the client sees a reset, not an HTTP answer
+                    return
                 length = int(self.headers.get("Content-Length") or 0)
                 raw = self.rfile.read(length) if length else b""
                 multipart = self.headers.get("Content-Type", "").startswith("multipart/form-data")
