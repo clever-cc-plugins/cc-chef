@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -25,6 +26,10 @@ class TandoorError(Exception):
 
 class NotConfigured(TandoorError):
     pass
+
+
+class Unreachable(TandoorError):
+    """No answer from the instance (timeout, reset, no route): the only error a read is repeated for."""
 
 
 @dataclass(frozen=True)
@@ -71,6 +76,9 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 class Client:
+    read_attempts = 3
+    retry_delay = 1  # seconds, times the attempt number
+
     def __init__(self, config: Config, timeout: int = 30):
         self.config = config
         self.timeout = timeout
@@ -105,7 +113,7 @@ class Client:
                 e.close()
         except (urllib.error.URLError, OSError) as e:
             reason = getattr(e, "reason", e)
-            raise self._fail(f"cannot reach {self.config.url}: {reason}") from None
+            raise Unreachable(self._scrub(f"cannot reach {self.config.url}: {reason}")) from None
         if "html" in ctype.lower():
             raise self._fail(f"{self.config.url} answered with a web page, not the API: check TANDOOR_URL (path, scheme, trailing slash)")
         if not raw:
@@ -130,7 +138,14 @@ class Client:
         return self._fail(f"{method} failed ({status}): {detail}", status)
 
     def get(self, path, params=None):
-        return self._request("GET", path, params)
+        # A read changes nothing, so it is safe to repeat; a write is never repeated, because the instance may have run it
+        for attempt in range(self.read_attempts):
+            try:
+                return self._request("GET", path, params)
+            except Unreachable:
+                if attempt == self.read_attempts - 1:
+                    raise
+                time.sleep(self.retry_delay * (attempt + 1))
 
     def post(self, path, body):
         return self._request("POST", path, body=body)
