@@ -139,13 +139,12 @@ class Client:
 
     def get(self, path, params=None):
         # A read changes nothing, so it is safe to repeat; a write is never repeated, because the instance may have run it
-        for attempt in range(self.read_attempts):
+        for attempt in range(1, self.read_attempts):
             try:
                 return self._request("GET", path, params)
             except Unreachable:
-                if attempt == self.read_attempts - 1:
-                    raise
-                time.sleep(self.retry_delay * (attempt + 1))
+                time.sleep(self.retry_delay * attempt)
+        return self._request("GET", path, params)
 
     def post(self, path, body):
         return self._request("POST", path, body=body)

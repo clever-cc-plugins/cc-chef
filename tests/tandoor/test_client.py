@@ -5,6 +5,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = HERE.parents[1] / "plugins" / "cc-chef" / "skills" / "_shared" / "scripts"
@@ -178,6 +179,12 @@ class ClientTests(unittest.TestCase):
             client.get("api/food/")
         self.assertEqual(caught.exception.status, 401)
         self.assertEqual(len([r for r in self.fake.requests if r["path"].endswith("/api/food/")]), 1)
+
+    def test_a_read_pauses_one_then_two_seconds_between_attempts(self):
+        self.fake.drop = 2
+        with mock.patch.object(tc.time, "sleep") as sleep:
+            self.client().get("api/server-settings/current/")
+        self.assertEqual([c.args[0] for c in sleep.call_args_list], [1, 2])
 
     def test_check_cli(self):
         r = cli(self.url, "check")
