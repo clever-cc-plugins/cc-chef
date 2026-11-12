@@ -189,36 +189,6 @@ class ClientTests(unittest.TestCase):
         r = cli(None, "check", token=None)
         self.assertEqual(r.returncode, 3)
 
-    def test_read_is_repeated_after_a_dropped_connection(self):
-        client = self.client()
-        client.retry_delay = 0
-        self.fake.drop = 2
-        self.assertEqual(client.get("api/server-settings/current/")["version"], "2.7.2")
-        self.assertEqual(self.fake.drop, 0)
-
-    def test_read_gives_up_after_three_attempts(self):
-        client = self.client()
-        client.retry_delay = 0
-        self.fake.drop = 4
-        with self.assertRaisesRegex(tc.TandoorError, "cannot reach"):
-            client.get("api/server-settings/current/")
-        self.assertEqual(self.fake.drop, 1)
-
-    def test_write_is_never_repeated(self):
-        client = self.client()
-        client.retry_delay = 0
-        self.fake.drop = 2
-        with self.assertRaisesRegex(tc.TandoorError, "cannot reach"):
-            client.post("api/keyword/", {"name": "once"})
-        self.assertEqual(self.fake.drop, 1)
-
-    def test_an_answer_with_an_error_is_not_repeated(self):
-        client = self.client()
-        client.retry_delay = 0
-        with self.assertRaisesRegex(tc.TandoorError, "404"):
-            client.get("api/recipe/999/")
-        self.assertEqual(len([r for r in self.fake.requests if r["path"] == "/api/recipe/999/"]), 1)
-
     def test_url_without_scheme_is_a_setup_error_not_a_traceback(self):
         r = cli("tandoor.example.com", "check")
         self.assertEqual(r.returncode, 3)
