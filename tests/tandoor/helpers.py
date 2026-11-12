@@ -19,6 +19,41 @@ SEED = json.loads((HERE / "fixtures" / "seed.json").read_text(encoding="utf-8"))
 TOKEN = "test-token"
 
 
+class ImageHost:
+    """A tiny web server for source images: /ok.jpg, /big.jpg, /page (html), /go (redirect to /ok.jpg), /go-private (redirect to 127.0.0.1), /file (redirect to file://)."""
+
+    def __init__(self):
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        import threading
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                if self.path in ("/go", "/file", "/go-private"):
+                    self.send_response(302)
+                    target = {"/go": "/ok.jpg", "/file": "file:///etc/hostname", "/go-private": f"http://127.0.0.1:{self.server.server_address[1]}/ok.jpg"}
+                    self.send_header("Location", target[self.path])
+                    self.end_headers()
+                    return
+                ctype, data = {"/ok.jpg": ("image/jpeg", b"\xff\xd8\xff\xd9"), "/big.jpg": ("image/jpeg", b"x" * (10 * 1024 * 1024 + 1))}.get(
+                    self.path, ("text/html", b"<html></html>"))
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+        self._server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=self._server.serve_forever, daemon=True).start()
+        self.url = f"http://127.0.0.1:{self._server.server_address[1]}"
+
+    def stop(self):
+        self._server.shutdown()
+        self._server.server_close()
+
+
 def cli(url, *args, token=TOKEN):
     env = {k: v for k, v in os.environ.items() if not k.startswith("TANDOOR_")}
     if url is not None:

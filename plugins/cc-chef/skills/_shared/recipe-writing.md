@@ -370,7 +370,7 @@ Changing presentation is editing; changing quantities or ingredients is developi
 | Headnote, distinctive method prose, personal story, photos, cookbook selection and arrangement | Protected expression; courts have left room for protection where a recipe carries real commentary                                        |
 | Other jurisdictions                                                                            | Rules differ (for example German protection turns on personal intellectual creation); do not turn the US rule into a worldwide clearance |
 
-Plugin rule: rewrite the method in neutral own wording, drop the source headnote rather than paraphrase it closely, do not reproduce photos, and never present verbatim reproduction as acceptable anywhere. Attribution does not replace permission. The folk rule "change three ingredients and it is yours" has no legal basis (all reports that mention it agree); do not encode it.
+Plugin rule: rewrite the method in neutral own wording, drop the source headnote rather than paraphrase it closely, do not reproduce photos (the one exception: with `Import source image` set to `yes`, or on request, the main image of a source URL is attached to the new recipe in the user's own Tandoor instance; it is never embedded in Markdown, JSON-LD or Paprika), and never present verbatim reproduction as acceptable anywhere. Attribution does not replace permission. The folk rule "change three ingredients and it is yours" has no legal basis (all reports that mention it agree); do not encode it.
 
 ### 8.4 Attribution tiers
 

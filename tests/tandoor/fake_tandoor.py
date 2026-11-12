@@ -42,7 +42,8 @@ class FakeTandoor:
             def _serve(self):
                 length = int(self.headers.get("Content-Length") or 0)
                 raw = self.rfile.read(length) if length else b""
-                body = json.loads(raw) if raw else None
+                multipart = self.headers.get("Content-Type", "").startswith("multipart/form-data")
+                body = raw if multipart else json.loads(raw) if raw else None
                 status, ctype, payload, extra = fake.handle(self.command, self.path, dict(self.headers), body)
                 data = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
                 self.send_response(status)
@@ -97,6 +98,13 @@ class FakeTandoor:
         merge = re.fullmatch(r"(food|unit)/(\d+)/merge/(\d+)/", rest)
         if merge and method == "PUT":
             return self.merge(merge.group(1), int(merge.group(2)), int(merge.group(3)))
+        image = re.fullmatch(r"recipe/(\d+)/image/", rest)
+        if image and method == "PUT":
+            found = next((r for r in self.db["recipe"] if r["id"] == int(image.group(1))), None)
+            if found is None:
+                return 404, "application/json", {"detail": "Not found."}, {}
+            found["image"] = f"/media/recipes/{found['id']}.img"
+            return 200, "application/json", found, {}
         parts = rest.split("/")  # "coll/" or "coll/<id>/"
         shaped = parts[-1] == "" and (len(parts) == 2 or (len(parts) == 3 and parts[1].isdigit()))
         coll, item_id = (parts[0], parts[1] if len(parts) == 3 else None) if shaped else (None, None)

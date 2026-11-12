@@ -14,6 +14,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from dataclasses import dataclass, field
 
 
@@ -85,16 +86,16 @@ class Client:
     def _fail(self, message: str, status: int | None = None) -> TandoorError:
         return TandoorError(self._scrub(message), status)
 
-    def _request(self, method: str, path: str, params=None, body=None):
+    def _request(self, method: str, path: str, params=None, body=None, raw=None):
         url = f"{self.config.url}/{path.lstrip('/')}"
         if params:
             url += "?" + urllib.parse.urlencode(params)
-        data = json.dumps(body).encode("utf-8") if body is not None else None
+        data = raw[0] if raw else json.dumps(body).encode("utf-8") if body is not None else None
         req = urllib.request.Request(url, data=data, method=method)
         req.add_header("Authorization", f"Bearer {self.config.token}")
         req.add_header("Accept", "application/json")
         if data is not None:
-            req.add_header("Content-Type", "application/json")
+            req.add_header("Content-Type", raw[1] if raw else "application/json")
         try:
             with self._opener.open(req, timeout=self.timeout) as resp:
                 raw, ctype = resp.read(), resp.headers.get("Content-Type", "")
@@ -143,6 +144,12 @@ class Client:
 
     def put(self, path, body=None):
         return self._request("PUT", path, body=body)
+
+    def put_file(self, path, field, filename, content_type, content):
+        boundary = uuid.uuid4().hex
+        head = f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"; filename="{filename}"\r\nContent-Type: {content_type}\r\n\r\n'
+        body = head.encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        return self._request("PUT", path, raw=(body, f"multipart/form-data; boundary={boundary}"))
 
     def list_all(self, path, params=None, page_size=200):
         size = min(page_size, 100 if path.lstrip("/").startswith("api/recipe/") else 200)
