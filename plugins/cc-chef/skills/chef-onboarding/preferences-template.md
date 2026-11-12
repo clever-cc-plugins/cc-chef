@@ -75,3 +75,7 @@ Written by `/cc-chef:chef-onboarding`. Other cc-chef skills read these fields by
 ## Keep Markdown after upload
 
 <yes | no; default yes. Only for the tandoor target: no deletes the Markdown file this run wrote once the upload is verified>
+
+## Import source image
+
+<yes | no; default no. Only for the tandoor target: yes attaches the main image of a web recipe's page to the new Tandoor recipe; meant for a private instance that only the household uses>

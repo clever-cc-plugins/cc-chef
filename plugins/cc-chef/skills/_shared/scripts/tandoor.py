@@ -16,6 +16,7 @@ from pathlib import Path
 import recipe_tool as rt
 import tandoor_cleanup as tcl
 import tandoor_client as tc
+import tandoor_image as ti
 import tandoor_match as tmatch
 import tandoor_model as tm
 
@@ -101,6 +102,8 @@ def _cmd_match(args: argparse.Namespace) -> int:
     recipe = rt._load(args.recipe)
     if recipe is None:
         return 1
+    if args.image_url:
+        ti.check_scheme(args.image_url)
     client = tc.Client(tc.load_config())
     payload = tm.to_payload(recipe)
     automations = [a for a in client.list_all("api/automation/") if not a.get("disabled")]
@@ -110,6 +113,9 @@ def _cmd_match(args: argparse.Namespace) -> int:
         if not isinstance(tandoor_id, int):
             print(f"{args.recipe}: tandoor-id must be a number", file=sys.stderr)
             return 1
+        if args.image_url:
+            print("--image-url applies to new recipes only: an update leaves the image as it is", file=sys.stderr)
+            return 1
         live = client.get(f"api/recipe/{tandoor_id}/")
         problems += tm.update_problems(live, recipe.meta.get("tandoor-updated-at"))
         kept = [k["name"] for k in live.get("keywords", [])] + [k["text"] for k in payload["keywords"]]
@@ -117,7 +123,7 @@ def _cmd_match(args: argparse.Namespace) -> int:
     plan = {
         "version": 1, "mode": "update" if live else "create", "source": str(args.recipe), "base_url": client.config.url,
         "tandoor_id": tandoor_id if live else None, "updated_at": live["updated_at"] if live else None,
-        "payload": payload, "foods": {}, "units": {}, "keywords": {}, "existing": [], "problems": problems,
+        "payload": payload, "image_url": args.image_url, "foods": {}, "units": {}, "keywords": {}, "existing": [], "problems": problems,
     }
     if live:
         plan["current"] = {"name": live["name"], "steps": len(live.get("steps", []))}
@@ -507,6 +513,8 @@ def _cmd_preview(args: argparse.Namespace) -> int:
     for kind, e in new:
         similar = "; ".join(f"{c['name']} (id {c['id']})" for c in e["candidates"][:3])  # a keyword is created without asking: show what it resembles
         print(f"- {kind}: {e['text']}" + (f" (similar: {similar})" if similar else ""))
+    if plan.get("image_url"):
+        print(f"Image: downloaded from {plan['image_url']} and attached to the new recipe")
     if plan["existing"]:
         print("A recipe with this name already exists:")
         for r in plan["existing"]:
@@ -579,6 +587,13 @@ def _cmd_upload(args: argparse.Namespace) -> int:
             print("Already created: " + ", ".join(made) + ". A new match finds them as exact.", file=sys.stderr)
         return 1
     print(f"{'Updated' if updating else 'Created'}: {recipe['id']} {cfg.url}/recipe/{recipe['id']}/")
+    if plan.get("image_url") and not updating:
+        try:  # a missing image never undoes a saved recipe: report it and go on
+            data, ctype = ti.fetch(plan["image_url"])
+            client.put_file(f"api/recipe/{recipe['id']}/image/", "image", "image." + ti.TYPES[ctype], ctype, data)
+            print("Image: set from the source page")
+        except tc.TandoorError as e:
+            print(f"Image not set: {e}", file=sys.stderr)
     try:
         stored = client.get(f"api/recipe/{recipe['id']}/")
     except tc.TandoorError as e:
@@ -598,6 +613,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("match", help="match a recipe file to the database and write a plan")
     p.add_argument("recipe")
     p.add_argument("-o", "--output", required=True)
+    p.add_argument("--image-url", help="image of a new recipe, downloaded and attached on upload")
     p.set_defaults(func=_cmd_match)
     p = sub.add_parser("resolve", help="decide one open food, unit or keyword in a plan")
     p.add_argument("plan")
