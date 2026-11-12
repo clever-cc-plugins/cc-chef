@@ -56,7 +56,7 @@ The plan is a JSON file the script writes and reads; skills never edit it by han
 | Update mode creates new entries first | Foods, units and keywords the plan marks as new are created before the recipe is patched. If the patch fails they stay; `upload` lists them, and a new `match` finds them as exact |
 | Updates cannot overwrite newer edits | The plan stores `updated_at`; update mode refuses when the recipe changed since the pull or since the plan                                                                            |
 
-A host that never answers costs about three timeouts (3 × 30 s) plus the pauses before a read fails.
+A host that never answers costs about three timeouts (3 × 30 s) plus the pauses before a read fails, and a mistyped `TANDOOR_URL` costs the pauses (3 s) before its error shows.
 
 ## 4. API facts the script relies on
 

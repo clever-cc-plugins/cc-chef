@@ -44,7 +44,7 @@ class FakeTandoor:
             def _serve(self):
                 if fake.drop:
                     fake.drop -= 1
-                    self.connection.shutdown(socket.SHUT_RDWR)
+                    self.connection.shutdown(socket.SHUT_RDWR)  # the client sees a reset, not an HTTP answer
                     return
                 length = int(self.headers.get("Content-Length") or 0)
                 raw = self.rfile.read(length) if length else b""

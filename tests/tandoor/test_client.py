@@ -186,6 +186,14 @@ class ClientTests(unittest.TestCase):
             self.client().get("api/server-settings/current/")
         self.assertEqual([c.args[0] for c in sleep.call_args_list], [1, 2])
 
+    def test_a_timeout_counts_as_no_answer(self):
+        client = self.client()
+        client.retry_delay = 0
+        with mock.patch.object(client._opener, "open", side_effect=TimeoutError("timed out")) as opened:
+            with self.assertRaisesRegex(tc.TandoorError, "cannot reach"):
+                client.get("api/server-settings/current/")
+        self.assertEqual(opened.call_count, 3)
+
     def test_check_cli(self):
         r = cli(self.url, "check")
         self.assertEqual(r.returncode, 0, r.stderr)
