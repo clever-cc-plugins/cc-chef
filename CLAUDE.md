@@ -26,7 +26,7 @@ A Claude Code plugin to create, adapt, rework and export grounded everyday recip
 | `plugins/cc-chef/skills/tandoor-food-cleanup/SKILL.md` | Merges duplicate Tandoor foods and units group by group after approval                          |
 | `scripts/sync-config-table.sh`                         | Keeps Key Config Files table in sync on each commit                                             |
 
-<!-- cc-config: last-optimize-run: 2026-11-07 9eb135012687e7e4c76ff53541f9b2fb6a839d6c -->
+<!-- cc-config: last-optimize-run: 2026-11-12 8c7adf109cd49f8d4863a9ec70b11a8394000189 -->
 
 ## Commands
 
