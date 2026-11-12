@@ -1,5 +1,7 @@
+import http.client
 import io
 import os
+import socket
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
@@ -25,17 +27,38 @@ class FetchTests(unittest.TestCase):
                 ti.check_scheme(url)
 
     def test_fetch_follows_checked_redirect_and_rejects_the_rest(self):
-        with mock.patch.object(ti, "is_public_host", lambda h: True):
+        with mock.patch.object(ti, "public_addresses", lambda h, port=0: ["127.0.0.1"]):
             self.assertEqual(ti.fetch(self.host.url + "/go"), (b"\xff\xd8\xff\xd9", "image/jpeg"))
             for path, message in (("/page", "not a jpeg"), ("/big.jpg", "larger than"), ("/file", "image download failed")):
                 with self.assertRaisesRegex(tc.TandoorError, message):
                     ti.fetch(self.host.url + path)
 
     def test_redirect_target_is_checked_again(self):
-        public = lambda h: h == "localhost"  # noqa: E731  first hop passes, the redirect to 127.0.0.1 does not
-        with mock.patch.object(ti, "is_public_host", public):
+        public = lambda h, port=0: ["127.0.0.1"] if h == "localhost" else []  # noqa: E731  first hop passes, the redirect to 127.0.0.1 does not
+        with mock.patch.object(ti, "public_addresses", public):
             with self.assertRaisesRegex(tc.TandoorError, "not a public address"):
                 ti.fetch(self.host.url.replace("127.0.0.1", "localhost") + "/go-private")
+
+    def test_connection_dials_the_checked_address_not_the_hostname(self):
+        port = int(self.host.url.rsplit(":", 1)[1])
+        with mock.patch.object(ti, "public_addresses", lambda h, p=0: ["127.0.0.1"]):
+            with mock.patch("socket.create_connection", wraps=socket.create_connection) as conn:
+                ti.fetch("http://pinned.example:%d/ok.jpg" % port)
+        self.assertEqual(conn.call_args[0][0], ("127.0.0.1", port))
+
+    def test_connect_time_lookup_is_checked_too(self):
+        with mock.patch.object(ti, "_check"), mock.patch.object(ti, "public_addresses", lambda h, p=0: []):
+            with self.assertRaisesRegex(tc.TandoorError, "not a public address"):
+                ti.fetch("http://rebind.example/ok.jpg")
+
+    def test_incomplete_read_is_a_tandoor_error(self):
+        resp = mock.MagicMock()
+        resp.__enter__.return_value = resp
+        resp.headers = {"Content-Type": "image/jpeg"}
+        resp.read.side_effect = http.client.IncompleteRead(b"x")
+        with mock.patch.object(ti, "_check"), mock.patch("urllib.request.OpenerDirector.open", return_value=resp):
+            with self.assertRaisesRegex(tc.TandoorError, "image download failed"):
+                ti.fetch("http://example.com/a.jpg")
 
 
 class UploadImageTests(FakeCase):
@@ -47,7 +70,7 @@ class UploadImageTests(FakeCase):
     def run_main(self, *args):
         env = {**{k: v for k, v in os.environ.items() if not k.startswith("TANDOOR_")}, "TANDOOR_URL": self.url, "TANDOOR_API_TOKEN": TOKEN}
         out, err = io.StringIO(), io.StringIO()
-        with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(ti, "is_public_host", lambda h: True):
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(ti, "public_addresses", lambda h, port=0: ["127.0.0.1"]):
             with redirect_stdout(out), redirect_stderr(err):
                 code = tandoor.main([str(a) for a in args])
         return code, out.getvalue(), err.getvalue()
