@@ -227,6 +227,23 @@ class ApplyTests(FakeCase):
         self.assertEqual(self.apply().returncode, 0)
         self.assertEqual(self.fake.db["food"][0]["plural_name"], "Zwiebeln")
 
+    def test_unit_plural_name_sends_the_name_along(self):
+        # Tandoor answers 500 to a unit PATCH that carries only plural_name
+        self.fake.db["unit"].append({"id": 9, "name": "Scheibe", "plural_name": None})
+        self.make_plan("--plural", "Scheiben", kind="unit", keep="9", merge="")
+        r = self.apply()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.fake.db["unit"][-1], {"id": 9, "name": "Scheibe", "plural_name": "Scheiben"})
+
+    def test_unit_rename_and_plural_name_together(self):
+        self.fake.db["unit"].append({"id": 9, "name": "Schb.", "plural_name": None})
+        self.make_plan("--rename", "Scheibe", "--plural", "Scheiben", kind="unit", keep="9", merge="")
+        r = self.apply()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.fake.db["unit"][-1], {"id": 9, "name": "Scheibe", "plural_name": "Scheiben"})
+        plural = [w for w in self.writes() if w["method"] == "PATCH" and "plural_name" in (w["body"] or {})]
+        self.assertEqual(plural[0]["body"], {"name": "Scheibe", "plural_name": "Scheiben"})  # the new name, not the old one
+
     def test_merge_warns_that_the_unit_is_not_changed(self):
         self.fake.db["food"] += [
             {"id": 8, "name": "Knoblauch", "plural_name": None, "properties": [], "open_data_slug": None, "parent": None},

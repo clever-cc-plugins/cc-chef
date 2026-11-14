@@ -74,6 +74,17 @@ class ModelTests(unittest.TestCase):
         p = tm.to_payload(mini(meta="servings: 4–6 Portionen\n"))
         self.assertEqual((p["servings"], p["servings_text"]), (1, "4–6 Portionen"))
 
+    def test_servings_count_with_label_splits(self):
+        for raw, expected in (
+            ("12 Muffins", (12, "Muffins")),
+            ("1 Blech (30 x 40 cm)", (1, "Blech (30 x 40 cm)")),
+            ("2,5 kg", (1, "2,5 kg")),
+            ("0 Stück", (1, "0 Stück")),
+            ("vier", (1, "vier")),
+        ):
+            p = tm.to_payload(mini(meta=f"servings: {raw}\n"))
+            self.assertEqual((p["servings"], p["servings_text"]), expected, raw)
+
     def test_notes_step(self):
         last = tm.to_payload(rouladen())["steps"][-1]
         self.assertEqual(last["name"], "Hinweise")
