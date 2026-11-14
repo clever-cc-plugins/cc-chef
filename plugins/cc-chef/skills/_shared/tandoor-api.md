@@ -113,7 +113,7 @@ Source: `TandoorRecipes/recipes`, branch `develop`, release 2.7.2. The status co
 | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | Amount ranges (`1–2 EL`)             | The lower bound is the amount; the full range is written at the start of the ingredient note     |
 | Notes, `oven`, `signature`, `source` | A final step without ingredients, titled like the notes heading (default `Notes`), in that order |
-| Servings with a label (`12 Muffins`) | `servings` 12 and `servings_text` `Muffins`; a bare number in an update keeps the recipe's current `servings_text` |
+| Servings with a label (`12 Muffins`) | `servings` 12 and `servings_text` `Muffins`; a bare number in an update keeps the recipe's current label when it holds no second number |
 | Other servings that are not one number | `servings` 1 and the original text in `servings_text`                                          |
 | Preparation and qualifiers           | The ingredient note, never the food name                                                         |
 | `prep-minutes`, `cook-minutes`       | `working_time` and `waiting_time`                                                                |

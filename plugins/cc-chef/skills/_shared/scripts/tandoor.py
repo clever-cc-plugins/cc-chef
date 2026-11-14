@@ -120,8 +120,9 @@ def _cmd_match(args: argparse.Namespace) -> int:
         problems += tm.update_problems(live, recipe.meta.get("tandoor-updated-at"))
         kept = [k["name"] for k in live.get("keywords", [])] + [k["text"] for k in payload["keywords"]]
         payload["keywords"] = [{"text": t} for t in {tm.normalize(t): t for t in reversed(kept)}.values()][::-1]
-        if not payload["servings_text"]:  # the file gave a bare number: keep the label it cannot carry ("12 Muffins")
-            payload["servings_text"] = live.get("servings_text") or ""
+        label = live.get("servings_text") or ""
+        if not payload["servings_text"] and tm.plain_label(label):  # a bare number keeps "Muffins", never a stale "4–6 Portionen"
+            payload["servings_text"] = label
     plan = {
         "version": 1, "mode": "update" if live else "create", "source": str(args.recipe), "base_url": client.config.url,
         "tandoor_id": tandoor_id if live else None, "updated_at": live["updated_at"] if live else None,
@@ -190,7 +191,7 @@ def _cmd_recipes(args: argparse.Namespace) -> int:
         params["query"] = args.query
     for r in client.get("api/recipe/", params)["results"][: args.limit]:
         # the list gives keywords as {id, label}; only the single recipe carries `name`
-        marked = any(tm.normalize(k.get("name") or k.get("label") or "") == tm.MARKER for k in r.get("keywords", []))
+        marked = any(tm.normalize(k.get("name") or k.get("label") or "") == tm.MARKER for k in r.get("keywords") or [])
         print(f"{r['id']}  {r['name']}" + (f"  [{tm.MARKER}]" if marked else ""))
     return 0
 

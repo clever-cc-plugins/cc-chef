@@ -13,7 +13,7 @@ MARKER = "cc-chef"
 LIMITS = {"name": 128, "description": 512, "step name": 128, "note": 256, "food": 128, "unit": 128, "source_url": 1024}
 _VULGAR = re.compile(r"([¼-¾⅐-⅞])")
 _RANGE = re.compile(r"\s*[-–]\s*")
-_COUNTED = re.compile(r"\s*([1-9]\d*)\s+([^\W\d_].*)")  # "12 Muffins", not "4–6 Portionen" or "2,5 kg"
+_COUNTED = re.compile(r"\s*([1-9]\d*)\s+([^\W\d_].*)")  # "12 Muffins", not "4–6 Portionen" or "2,5 kg"; see plain_label
 
 
 def normalize(text: str) -> str:
@@ -76,6 +76,11 @@ def _notes_step(r: Recipe, order: int) -> dict | None:
     }
 
 
+def plain_label(text: str) -> bool:
+    """A servings label without a second number ("Muffins", "Blech (30 x 40 cm)"), not "bis 8 Portionen" or "x 12 Muffins"."""
+    return not re.search(r"\d", re.sub(r"\([^)]*\)", "", text))
+
+
 def _servings(value) -> tuple[int, str]:
     """`servings` and `servings_text`: a count with a label ("12 Muffins") splits; anything else that is not a number becomes the text."""
     if isinstance(value, int):
@@ -83,7 +88,9 @@ def _servings(value) -> tuple[int, str]:
     if value in (None, ""):
         return 1, ""
     m = _COUNTED.match(str(value))
-    return (int(m.group(1)), m.group(2).strip()) if m else (1, str(value))
+    if m and plain_label(m.group(2)):
+        return int(m.group(1)), m.group(2).strip()
+    return 1, str(value)
 
 
 def to_payload(r: Recipe) -> dict:

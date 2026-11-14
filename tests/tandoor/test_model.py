@@ -79,6 +79,9 @@ class ModelTests(unittest.TestCase):
             ("12 Muffins", (12, "Muffins")),
             ("1 Blech (30 x 40 cm)", (1, "Blech (30 x 40 cm)")),
             ("2,5 kg", (1, "2,5 kg")),
+            ("6 bis 8 Portionen", (1, "6 bis 8 Portionen")),
+            ("6 to 8 servings", (1, "6 to 8 servings")),
+            ("2 x 12 Muffins", (1, "2 x 12 Muffins")),
             ("0 Stück", (1, "0 Stück")),
             ("vier", (1, "vier")),
         ):
