@@ -121,6 +121,9 @@ class UpdateTests(FakeCase):
         self.assertEqual((servings, label), (12, "Muffins"))
         self.assertIn("Servings: 12 (Muffins)", preview)  # the preview shows what is kept
 
+    def test_update_keeps_the_servings_label_when_the_count_changes(self):
+        self.assertEqual(self.upload_with_servings("servings: 24\n")[:2], (24, "Muffins"))
+
     def test_update_drops_a_live_servings_range_for_a_bare_number(self):
         self.assertEqual(self.upload_with_servings("servings: 12\n", live_text="4–6 Portionen")[:2], (12, ""))
 

@@ -78,7 +78,8 @@ def _notes_step(r: Recipe, order: int) -> dict | None:
 
 def plain_label(text: str) -> bool:
     """A servings label without a second number ("Muffins", "Blech (30 x 40 cm)"), not "bis 8 Portionen" or "x 12 Muffins"."""
-    return not re.search(r"\d", re.sub(r"\([^)]*\)", "", text))
+    rest = re.sub(r"\([^)]*\)", "", text).strip()
+    return rest[:1].isalpha() and not any(c.isnumeric() for c in rest)  # isnumeric also catches "½", which \d misses
 
 
 def _servings(value) -> tuple[int, str]:

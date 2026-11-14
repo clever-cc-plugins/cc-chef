@@ -82,6 +82,8 @@ class ModelTests(unittest.TestCase):
             ("6 bis 8 Portionen", (1, "6 bis 8 Portionen")),
             ("6 to 8 servings", (1, "6 to 8 servings")),
             ("2 x 12 Muffins", (1, "2 x 12 Muffins")),
+            ("2 ½ kg", (1, "2 ½ kg")),
+            ("6 bis 8½ Stück", (1, "6 bis 8½ Stück")),
             ("0 Stück", (1, "0 Stück")),
             ("vier", (1, "vier")),
         ):
