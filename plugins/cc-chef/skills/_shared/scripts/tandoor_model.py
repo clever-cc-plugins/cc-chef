@@ -13,6 +13,7 @@ MARKER = "cc-chef"
 LIMITS = {"name": 128, "description": 512, "step name": 128, "note": 256, "food": 128, "unit": 128, "source_url": 1024}
 _VULGAR = re.compile(r"([¼-¾⅐-⅞])")
 _RANGE = re.compile(r"\s*[-–]\s*")
+_COUNTED = re.compile(r"\s*([1-9]\d*)\s+([^\W\d_].*)")  # "12 Muffins", not "4–6 Portionen" or "2,5 kg"; see plain_label
 
 
 def normalize(text: str) -> str:
@@ -75,8 +76,26 @@ def _notes_step(r: Recipe, order: int) -> dict | None:
     }
 
 
+def plain_label(text: str) -> bool:
+    """A servings label without a second number ("Muffins", "Blech (30 x 40 cm)"), not "bis 8 Portionen" or "x 12 Muffins"."""
+    rest = re.sub(r"\([^)]*\)", "", text).strip()
+    return rest[:1].isalpha() and not any(c.isnumeric() for c in rest)  # isnumeric also catches "½", which \d misses
+
+
+def _servings(value) -> tuple[int, str]:
+    """`servings` and `servings_text`: a count with a label ("12 Muffins") splits; anything else that is not a number becomes the text."""
+    if isinstance(value, int):
+        return value, ""
+    if value in (None, ""):
+        return 1, ""
+    m = _COUNTED.match(str(value))
+    if m and plain_label(m.group(2)):
+        return int(m.group(1)), m.group(2).strip()
+    return 1, str(value)
+
+
 def to_payload(r: Recipe) -> dict:
-    servings = r.meta.get("servings")
+    servings, servings_text = _servings(r.meta.get("servings"))
     steps = [
         {
             "name": s.title,
@@ -98,8 +117,8 @@ def to_payload(r: Recipe) -> dict:
     return {
         "name": r.title,
         "description": r.description,
-        "servings": servings if isinstance(servings, int) else 1,
-        "servings_text": "" if servings in (None, "") or isinstance(servings, int) else str(servings),
+        "servings": servings,
+        "servings_text": servings_text,
         "working_time": minutes("prep-minutes"),
         "waiting_time": minutes("cook-minutes"),
         "source_url": str(r.meta.get("source-url") or ""),

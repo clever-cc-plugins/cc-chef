@@ -133,6 +133,9 @@ class FakeTandoor:
             return 204, "application/json", b"", {}
         if method == "PATCH" and coll == "recipe":
             return self.patch_recipe(found, body)
+        if method == "PATCH" and coll == "unit" and "name" not in body:
+            # Tandoor 2.7.2 (checked live): a unit PATCH without `name` is a server error, with `name` it works
+            return 500, "text/html", b"<h1>Server Error (500)</h1>", {}
         if method == "PATCH":
             found.update(body)
             return 200, "application/json", found, {}
@@ -142,6 +145,8 @@ class FakeTandoor:
         if query.get("query"):
             items = [i for i in items if query["query"].casefold() in i.get("name", "").casefold()]
         items = [self.extend(coll, i, query) for i in items]
+        if coll == "recipe":  # Tandoor 2.7.2 (checked live): the list gives keywords as {id, label}, without `name`
+            items = [{**r, "keywords": [{"id": k["id"], "label": k["name"]} for k in r.get("keywords", [])]} for r in items]
         cap = 100 if coll == "recipe" else 200
         size = min(int(query.get("page_size", 50)), cap)
         page = int(query.get("page", 1))

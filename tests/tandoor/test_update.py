@@ -105,6 +105,31 @@ class UpdateTests(FakeCase):
         names = [k["name"] for k in self.fake.db["recipe"][0]["keywords"]]
         self.assertEqual(sorted(names), ["Familie", "Test", "cc-chef"])
 
+    def upload_with_servings(self, servings_line, live_text="Muffins"):
+        self.fake.db["recipe"][0].update(servings=12, servings_text=live_text)
+        self.recipe.write_text(self.recipe.read_text(encoding="utf-8").replace("servings: 2\n", servings_line), encoding="utf-8")
+        self.match()
+        self.resolve_all()
+        preview = self.run_cli("preview", self.plan_path).stdout
+        r = self.run_cli("upload", self.plan_path, "--confirm", self.digest())
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        stored = self.fake.db["recipe"][0]
+        return stored["servings"], stored["servings_text"], preview
+
+    def test_update_keeps_the_servings_label_when_the_file_has_a_bare_number(self):
+        servings, label, preview = self.upload_with_servings("servings: 12\n")
+        self.assertEqual((servings, label), (12, "Muffins"))
+        self.assertIn("Servings: 12 (Muffins)", preview)  # the preview shows what is kept
+
+    def test_update_keeps_the_servings_label_when_the_count_changes(self):
+        self.assertEqual(self.upload_with_servings("servings: 24\n")[:2], (24, "Muffins"))
+
+    def test_update_drops_a_live_servings_range_for_a_bare_number(self):
+        self.assertEqual(self.upload_with_servings("servings: 12\n", live_text="4–6 Portionen")[:2], (12, ""))
+
+    def test_update_takes_the_servings_label_from_the_file(self):
+        self.assertEqual(self.upload_with_servings("servings: 24 Mini-Muffins\n")[:2], (24, "Mini-Muffins"))
+
     def refused(self, needle):
         self.match()
         self.resolve_all()
